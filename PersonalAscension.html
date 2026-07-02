@@ -1,0 +1,3642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Personal Ascension</title>
+<style>
+/* ======================================================
+   RESET & BASE
+   ====================================================== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#090b12;--bg2:#0d1120;--bg3:#111827;
+  --card:#131b2e;--card2:#192036;
+  --border:#1e2d50;--border2:#2a3d6e;
+  --neon:#4cc9f0;--neon2:#8b5cf6;--neon3:#c850e0;
+  --gold:#f5b942;--red:#ff4d6d;--green:#22c55e;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --xp-bar:#4cc9f0;--coin:#f5b942;
+  --radius:12px;--radius2:8px;
+  --shadow: 0 0 24px rgba(76,201,240,.07);
+  --glow: 0 0 12px rgba(76,201,240,.35);
+  --glow2: 0 0 12px rgba(139,92,246,.35);
+  --transition:.22s cubic-bezier(.4,0,.2,1);
+}
+html{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);scroll-behavior:smooth}
+body{min-height:100vh;display:flex;flex-direction:column}
+button{cursor:pointer;font-family:inherit;border:none;outline:none}
+input,textarea,select{font-family:inherit;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:var(--radius2);padding:8px 12px;font-size:.9rem;width:100%}
+input:focus,textarea:focus,select:focus{border-color:var(--neon);box-shadow:0 0 0 2px rgba(76,201,240,.15);outline:none}
+textarea{resize:vertical;min-height:70px}
+a{color:var(--neon);text-decoration:none}
+h1,h2,h3,h4{line-height:1.3}
+img{max-width:100%}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ======================================================
+   LAYOUT SHELL
+   ====================================================== */
+#app{display:flex;min-height:100vh}
+
+/* Sidebar */
+#sidebar{
+  width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;
+  overflow-y:auto;z-index:100;transition:transform var(--transition);
+}
+#sidebar-brand{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-brand .brand-name{font-size:1rem;font-weight:700;color:var(--neon);letter-spacing:.5px;text-shadow:var(--glow)}
+#sidebar-brand .brand-sub{font-size:.7rem;color:var(--text3);margin-top:2px}
+#sidebar-player-mini{padding:12px 16px;border-bottom:1px solid var(--border);background:var(--card)}
+#sidebar-player-mini .mini-name{font-size:.85rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sidebar-player-mini .mini-level{font-size:.75rem;color:var(--neon);margin-top:2px}
+#sidebar-player-mini .mini-xpbar{height:3px;background:var(--border);border-radius:2px;margin-top:6px}
+#sidebar-player-mini .mini-xpfill{height:100%;background:var(--neon);border-radius:2px;transition:width .5s}
+#sidebar-nav{flex:1;padding:8px 0}
+.nav-section-label{font-size:.65rem;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;padding:12px 18px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:.85rem;color:var(--text2);transition:all var(--transition);cursor:pointer;border-radius:0;position:relative}
+.nav-item:hover{background:rgba(76,201,240,.06);color:var(--text)}
+.nav-item.active{background:rgba(76,201,240,.12);color:var(--neon);font-weight:600}
+.nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--neon);border-radius:0 2px 2px 0;box-shadow:var(--glow)}
+.nav-icon{font-size:1rem;width:20px;text-align:center}
+#sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);font-size:.72rem;color:var(--text3)}
+
+/* Main content */
+#main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+#topbar{
+  position:sticky;top:0;z-index:50;background:rgba(9,11,18,.85);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;
+  padding:10px 24px;gap:12px;
+}
+#topbar-title{font-size:1rem;font-weight:700;color:var(--text)}
+#topbar-right{display:flex;align-items:center;gap:16px}
+.topbar-stat{display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600}
+.topbar-stat .ts-icon{font-size:1rem}
+.topbar-stat .ts-val{color:var(--text)}
+.topbar-coin{color:var(--gold)}
+.topbar-energy{color:var(--green)}
+#menu-toggle{display:none;background:transparent;color:var(--text);font-size:1.3rem;padding:4px}
+
+/* Pages */
+#pages{flex:1}
+.page{display:none;padding:24px;max-width:1200px;margin:0 auto;width:100%;animation:fadeIn .25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ======================================================
+   CARDS & COMPONENTS
+   ====================================================== */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.card-glow{box-shadow:var(--glow)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.card-title .ct-icon{font-size:1.1rem}
+.section-title{font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* Progress bars */
+.prog-wrap{background:var(--border);border-radius:100px;overflow:hidden}
+.prog-fill{height:100%;border-radius:100px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.prog-xp .prog-fill{background:linear-gradient(90deg,var(--neon),var(--neon2))}
+.prog-coin .prog-fill{background:linear-gradient(90deg,var(--gold),#e09b0f)}
+.prog-health .prog-fill{background:linear-gradient(90deg,#22c55e,#16a34a)}
+.prog-energy .prog-fill{background:linear-gradient(90deg,#22c55e,var(--neon))}
+.prog-boss .prog-fill{background:linear-gradient(90deg,var(--red),var(--neon3))}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:100px;font-size:.72rem;font-weight:600}
+.badge-blue{background:rgba(76,201,240,.15);color:var(--neon);border:1px solid rgba(76,201,240,.3)}
+.badge-purple{background:rgba(139,92,246,.15);color:var(--neon2);border:1px solid rgba(139,92,246,.3)}
+.badge-gold{background:rgba(245,185,66,.15);color:var(--gold);border:1px solid rgba(245,185,66,.3)}
+.badge-red{background:rgba(255,77,109,.15);color:var(--red);border:1px solid rgba(255,77,109,.3)}
+.badge-green{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.badge-gray{background:rgba(100,116,139,.15);color:var(--text3);border:1px solid var(--border)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:var(--radius2);font-size:.85rem;font-weight:600;transition:all var(--transition);cursor:pointer;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,var(--neon),var(--neon2));color:#000;box-shadow:0 0 14px rgba(76,201,240,.3)}
+.btn-primary:hover{opacity:.88;box-shadow:0 0 22px rgba(76,201,240,.5)}
+.btn-secondary{background:var(--card2);color:var(--text2);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--neon);color:var(--neon)}
+.btn-danger{background:rgba(255,77,109,.1);color:var(--red);border:1px solid rgba(255,77,109,.3)}
+.btn-danger:hover{background:rgba(255,77,109,.2)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#e09b0f);color:#000;box-shadow:0 0 14px rgba(245,185,66,.3)}
+.btn-gold:hover{opacity:.88}
+.btn-sm{padding:5px 11px;font-size:.78rem}
+.btn-icon{padding:6px;width:32px;height:32px;border-radius:var(--radius2)}
+
+/* Grids */
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+
+/* ======================================================
+   HABIT ITEM
+   ====================================================== */
+.habit-item{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);
+  transition:all var(--transition);cursor:pointer;
+}
+.habit-item:hover{border-color:var(--border2);transform:translateX(2px)}
+.habit-item.done{opacity:.55;background:rgba(76,201,240,.04)}
+.habit-item.done .hi-name{text-decoration:line-through;color:var(--text3)}
+.hi-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.8rem;transition:all var(--transition)}
+.habit-item.done .hi-check{background:var(--neon);border-color:var(--neon);color:#000;box-shadow:0 0 8px rgba(76,201,240,.5)}
+.hi-icon{font-size:1.4rem;width:28px;text-align:center}
+.hi-info{flex:1;min-width:0}
+.hi-name{font-size:.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hi-meta{display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap}
+.hi-xp{font-size:.72rem;color:var(--neon);font-weight:600}
+.hi-coins{font-size:.72rem;color:var(--gold);font-weight:600}
+.hi-dur{font-size:.72rem;color:var(--text3)}
+.hi-diff{font-size:.68rem}
+
+/* ======================================================
+   STAT BLOCK
+   ====================================================== */
+.stat-block{text-align:center;padding:14px;background:var(--card2);border-radius:var(--radius2);border:1px solid var(--border)}
+.sb-val{font-size:1.5rem;font-weight:700;color:var(--neon);text-shadow:0 0 12px rgba(76,201,240,.4)}
+.sb-label{font-size:.72rem;color:var(--text3);margin-top:4px}
+
+/* ======================================================
+   ATTRIBUTE BAR
+   ====================================================== */
+.attr-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.attr-icon{font-size:1.1rem;width:24px}
+.attr-label{font-size:.8rem;width:90px;color:var(--text2);flex-shrink:0}
+.attr-bar{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.attr-fill{height:100%;background:linear-gradient(90deg,var(--neon),var(--neon2));border-radius:4px;transition:width .6s}
+.attr-val{font-size:.78rem;color:var(--neon);width:32px;text-align:right;font-weight:700}
+
+/* ======================================================
+   HEATMAP
+   ====================================================== */
+#heatmap{display:flex;gap:3px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px}
+.hm-week{display:flex;flex-direction:column;gap:3px}
+.hm-day{width:13px;height:13px;border-radius:2px;background:var(--border);cursor:default;transition:transform .1s}
+.hm-day:hover{transform:scale(1.4)}
+.hm-day[data-s="1"]{background:#1e4263}
+.hm-day[data-s="2"]{background:#1a6090}
+.hm-day[data-s="3"]{background:var(--neon)}
+.hm-day[data-s="4"]{background:#fff;box-shadow:0 0 6px var(--neon)}
+
+/* ======================================================
+   BOSS CARD
+   ====================================================== */
+.boss-card{
+  background:linear-gradient(135deg,var(--card),#1a0d2e);
+  border:1px solid rgba(200,80,224,.4);border-radius:var(--radius);padding:18px;
+  box-shadow:0 0 20px rgba(200,80,224,.1);
+}
+.boss-rank{font-size:.7rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--neon3)}
+.boss-name{font-size:1.05rem;font-weight:700;margin:4px 0 12px}
+.boss-hp-label{font-size:.75rem;color:var(--text3);margin-bottom:4px}
+.boss-hp-bar{height:10px;background:rgba(255,77,109,.1);border-radius:5px;overflow:hidden;border:1px solid rgba(255,77,109,.2)}
+.boss-hp-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--neon3));transition:width .8s;border-radius:5px;box-shadow:0 0 8px rgba(255,77,109,.4)}
+
+/* ======================================================
+   BOOK CARD
+   ====================================================== */
+.book-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:all var(--transition)}
+.book-card:hover{border-color:var(--border2)}
+.book-title{font-size:.92rem;font-weight:700;margin-bottom:2px}
+.book-author{font-size:.78rem;color:var(--text3);margin-bottom:10px}
+.book-progress-label{display:flex;justify-content:space-between;font-size:.75rem;color:var(--text2);margin-bottom:4px}
+.book-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.book-completed{border-color:var(--neon);box-shadow:0 0 14px rgba(76,201,240,.08)}
+
+/* ======================================================
+   ACHIEVEMENT GRID
+   ====================================================== */
+.ach-item{
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  padding:14px 10px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);
+  transition:all var(--transition);
+}
+.ach-item.unlocked{border-color:rgba(245,185,66,.4);background:rgba(245,185,66,.04);box-shadow:0 0 14px rgba(245,185,66,.08)}
+.ach-item.locked{opacity:.35;filter:grayscale(.6)}
+.ach-icon{font-size:2rem;margin-bottom:6px}
+.ach-name{font-size:.78rem;font-weight:700;color:var(--text)}
+.ach-desc{font-size:.7rem;color:var(--text3);margin-top:3px}
+.ach-reward{font-size:.7rem;color:var(--gold);margin-top:4px}
+
+/* ======================================================
+   MODAL
+   ====================================================== */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
+  z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;
+  animation:fadeIn .2s;
+}
+.modal{
+  background:var(--card);border:1px solid var(--border2);border-radius:var(--radius);
+  padding:24px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;
+  box-shadow:0 0 40px rgba(76,201,240,.1);
+}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:1.05rem;font-weight:700}
+.modal-close{background:transparent;color:var(--text3);font-size:1.2rem;transition:color var(--transition)}
+.modal-close:hover{color:var(--text)}
+.modal-body{display:flex;flex-direction:column;gap:14px}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:.8rem;font-weight:600;color:var(--text2)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ======================================================
+   TOAST NOTIFICATIONS
+   ====================================================== */
+#toast-container{position:fixed;bottom:20px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{
+  display:flex;align-items:center;gap:10px;padding:10px 16px;
+  background:var(--card);border:1px solid var(--border2);border-radius:var(--radius2);
+  box-shadow:0 4px 20px rgba(0,0,0,.4);pointer-events:all;
+  animation:toastIn .3s ease;min-width:220px;max-width:320px;
+}
+.toast-xp{border-color:rgba(76,201,240,.5)}
+.toast-levelup{border-color:rgba(245,185,66,.6);background:linear-gradient(135deg,var(--card),#1a1200);box-shadow:0 0 24px rgba(245,185,66,.2)}
+.toast-achievement{border-color:rgba(245,185,66,.5);background:linear-gradient(135deg,var(--card),#1a1000)}
+.toast-boss{border-color:rgba(255,77,109,.5)}
+.toast-icon{font-size:1.2rem}
+.toast-text{flex:1;font-size:.82rem;color:var(--text)}
+.toast-dismiss{background:transparent;color:var(--text3);font-size:.9rem;padding:0 4px}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* ======================================================
+   LEVEL-UP OVERLAY
+   ====================================================== */
+#levelup-overlay{
+  position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.85);
+  display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;
+  animation:fadeIn .3s;
+}
+#levelup-overlay.show{display:flex}
+#levelup-overlay .lu-level{font-size:5rem;font-weight:900;color:var(--gold);text-shadow:0 0 40px var(--gold);animation:pulse 1s infinite}
+#levelup-overlay .lu-label{font-size:1.8rem;font-weight:700;color:var(--text);letter-spacing:4px;text-transform:uppercase}
+#levelup-overlay .lu-rank{font-size:1rem;color:var(--neon);margin-top:4px}
+#levelup-overlay .lu-btn{margin-top:24px}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+/* ======================================================
+   PARTICLES (lightweight CSS only)
+   ====================================================== */
+.particles{position:fixed;pointer-events:none;inset:0;overflow:hidden;z-index:-1}
+.particle{position:absolute;border-radius:50%;animation:float linear infinite;opacity:0}
+@keyframes float{
+  0%{transform:translateY(100vh) rotate(0deg);opacity:0}
+  10%{opacity:.3}
+  90%{opacity:.15}
+  100%{transform:translateY(-10vh) rotate(720deg);opacity:0}
+}
+
+/* ======================================================
+   SPECIFIC PAGE STYLES
+   ====================================================== */
+
+/* Dashboard */
+#dash-greeting{font-size:1.4rem;font-weight:700;margin-bottom:4px}
+#dash-motivational{font-size:.85rem;color:var(--text3);margin-bottom:24px;font-style:italic}
+#dash-overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.dash-stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);padding:14px;text-align:center}
+.dsc-icon{font-size:1.6rem}
+.dsc-val{font-size:1.3rem;font-weight:700;color:var(--neon);margin:4px 0}
+.dsc-label{font-size:.72rem;color:var(--text3)}
+#dash-xp-section{margin-bottom:20px}
+#dash-xp-row{display:flex;justify-content:space-between;font-size:.8rem;color:var(--text2);margin-bottom:6px}
+#dash-progress-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.progress-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);padding:14px}
+.ps-label{font-size:.8rem;font-weight:600;color:var(--text2);margin-bottom:8px}
+.ps-num{font-size:.78rem;color:var(--text3);text-align:right;margin-bottom:4px}
+#dash-habits-quick .dh-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+#dash-habits-quick .dh-title{font-size:.95rem;font-weight:700}
+#dash-habits-quick .dh-prog{font-size:.82rem;color:var(--neon);font-weight:600}
+#dash-habits-list{display:flex;flex-direction:column;gap:8px}
+
+/* Character */
+#char-header{display:flex;align-items:center;gap:20px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px;box-shadow:var(--glow)}
+#char-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--neon2),var(--neon3));display:flex;align-items:center;justify-content:center;font-size:2rem;border:2px solid var(--neon);box-shadow:var(--glow);flex-shrink:0}
+#char-info{flex:1}
+#char-name{font-size:1.4rem;font-weight:800}
+#char-rank-title{display:flex;align-items:center;gap:8px;margin:4px 0}
+#char-xp-bar-wrap{margin-top:8px}
+#char-level-big{font-size:3rem;font-weight:900;color:var(--neon);text-shadow:var(--glow);line-height:1;flex-shrink:0}
+#char-attributes{margin-bottom:20px}
+#char-titles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.title-item{background:var(--card2);border:1px solid var(--border);border-radius:var(--radius2);padding:10px;font-size:.8rem;cursor:pointer;transition:all var(--transition)}
+.title-item.active-title{border-color:var(--gold);color:var(--gold);background:rgba(245,185,66,.07)}
+.title-item.locked-title{opacity:.35}
+.title-item:hover:not(.locked-title){border-color:var(--neon)}
+.title-name{font-weight:700}
+.title-desc{font-size:.7rem;color:var(--text3);margin-top:2px}
+
+/* Habits page */
+#habits-filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.filter-btn{padding:5px 12px;border-radius:100px;font-size:.75rem;font-weight:600;background:var(--card2);color:var(--text3);border:1px solid var(--border);transition:all var(--transition)}
+.filter-btn.active{background:rgba(76,201,240,.12);color:var(--neon);border-color:rgba(76,201,240,.4)}
+#habits-list-wrap{display:flex;flex-direction:column;gap:8px}
+.habit-info-btn{background:transparent;color:var(--text3);padding:4px 6px;border-radius:var(--radius2);font-size:.8rem;transition:color var(--transition)}
+.habit-info-btn:hover{color:var(--neon)}
+
+/* Reading */
+.book-add-form{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px}
+#books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.book-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.pages-input-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.pages-input-row input{max-width:80px}
+
+/* Schedule */
+#schedule-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+#fixed-events-list{display:flex;flex-direction:column;gap:8px}
+.event-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius2)}
+.event-time{font-size:.78rem;color:var(--neon);font-weight:700;width:80px;flex-shrink:0}
+.event-name{flex:1;font-size:.85rem}
+#suggestions-list{display:flex;flex-direction:column;gap:8px}
+.sug-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(76,201,240,.04);border:1px solid rgba(76,201,240,.15);border-radius:var(--radius2)}
+.sug-time{font-size:.78rem;color:var(--neon);font-weight:700;width:80px;flex-shrink:0}
+
+/* Goals */
+#goals-list{display:flex;flex-direction:column;gap:10px}
+.goal-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);padding:14px;transition:all var(--transition)}
+.goal-item:hover{border-color:var(--border2)}
+.goal-item.completed{opacity:.55;border-style:dashed}
+.goal-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.goal-title{font-size:.9rem;font-weight:700}
+.goal-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:.75rem;color:var(--text3)}
+.goal-progress-row{display:flex;align-items:center;gap:8px}
+.goal-progress-row .prog-wrap{flex:1;height:6px}
+.goal-pct{font-size:.75rem;color:var(--neon);font-weight:600;min-width:36px;text-align:right}
+
+/* Statistics */
+#stats-overview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+#bar-chart{height:140px;display:flex;align-items:flex-end;gap:6px;padding:8px 0}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.bar-fill{background:linear-gradient(180deg,var(--neon),var(--neon2));border-radius:4px 4px 0 0;width:100%;transition:height .6s;min-height:2px}
+.bar-label{font-size:.65rem;color:var(--text3)}
+.bar-val{font-size:.65rem;color:var(--neon)}
+#week-chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+
+/* Shop */
+#shop-balance{background:linear-gradient(135deg,var(--card),#1a1200);border:1px solid rgba(245,185,66,.3);border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:16px;margin-bottom:24px;box-shadow:0 0 20px rgba(245,185,66,.07)}
+#shop-balance .bal-icon{font-size:2.5rem}
+#shop-balance .bal-val{font-size:2rem;font-weight:900;color:var(--gold)}
+#shop-balance .bal-label{font-size:.8rem;color:var(--text3)}
+#rewards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.reward-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:all var(--transition);display:flex;flex-direction:column;gap:8px}
+.reward-card:hover{border-color:rgba(245,185,66,.4);box-shadow:0 0 16px rgba(245,185,66,.08)}
+.rc-name{font-size:.9rem;font-weight:700}
+.rc-desc{font-size:.78rem;color:var(--text3);flex:1}
+.rc-price{font-size:1rem;font-weight:800;color:var(--gold)}
+.rc-footer{display:flex;align-items:center;justify-content:space-between}
+
+/* Bosses */
+#bosses-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.boss-footer{display:flex;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap;gap:8px;font-size:.78rem}
+.boss-reward{color:var(--neon);display:flex;align-items:center;gap:4px}
+
+/* Semester */
+#semester-form{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px}
+#exams-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.exam-item{display:flex;align-items:center;gap:10px;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius2)}
+.exam-date{font-size:.78rem;color:var(--red);font-weight:700;width:80px}
+.exam-name{flex:1;font-size:.85rem}
+
+/* Encyclopedia */
+#enc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.enc-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);padding:14px;cursor:pointer;transition:all var(--transition);text-align:center}
+.enc-card:hover{border-color:var(--neon);transform:translateY(-2px)}
+.enc-icon{font-size:2rem;margin-bottom:8px}
+.enc-name{font-size:.85rem;font-weight:700}
+.enc-article{display:none}
+.enc-article.active{display:block;animation:fadeIn .25s}
+.enc-section{margin-bottom:18px}
+.enc-section h3{font-size:.9rem;font-weight:700;color:var(--neon);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.enc-section p,.enc-section li{font-size:.85rem;color:var(--text2);line-height:1.7}
+.enc-section ul{padding-left:20px;display:flex;flex-direction:column;gap:4px}
+
+/* Settings & Backup */
+.settings-group{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px}
+.settings-group h3{font-size:.9rem;font-weight:700;margin-bottom:14px;color:var(--text2)}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.setting-row:last-child{border-bottom:none}
+.setting-label{font-size:.85rem}
+.setting-desc{font-size:.75rem;color:var(--text3);margin-top:2px}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{display:none}
+.toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:11px;cursor:pointer;transition:background var(--transition)}
+.toggle input:checked + .toggle-slider{background:var(--neon)}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform var(--transition)}
+.toggle input:checked + .toggle-slider::before{transform:translateX(18px)}
+
+/* Recommendations */
+#rec-list{display:flex;flex-direction:column;gap:8px}
+.rec-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:rgba(76,201,240,.04);border:1px solid rgba(76,201,240,.12);border-radius:var(--radius2);font-size:.83rem;color:var(--text2)}
+.rec-icon{font-size:1rem;flex-shrink:0;margin-top:1px}
+
+/* Prestige */
+.prestige-section{background:linear-gradient(135deg,var(--card),#0f0b1a);border:1px solid rgba(139,92,246,.4);border-radius:var(--radius);padding:20px;box-shadow:0 0 24px rgba(139,92,246,.07)}
+
+/* ======================================================
+   RESPONSIVE
+   ====================================================== */
+@media(max-width:900px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0}
+  #menu-toggle{display:flex}
+  .grid-3,.grid-4{grid-template-columns:repeat(2,1fr)}
+  #dash-progress-grid{grid-template-columns:1fr}
+  #schedule-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .page{padding:16px}
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+  #char-header{flex-direction:column;text-align:center}
+  #char-level-big{font-size:2.2rem}
+  #topbar{padding:8px 14px}
+}
+
+/* ======================================================
+   ENERGY BAR COLORS
+   ====================================================== */
+.energy-bar-fill[data-level="low"]{background:linear-gradient(90deg,var(--red),#ff6b35)}
+.energy-bar-fill[data-level="mid"]{background:linear-gradient(90deg,var(--gold),#ffd166)}
+.energy-bar-fill[data-level="high"]{background:linear-gradient(90deg,var(--green),var(--neon))}
+
+/* Misc helpers */
+.text-neon{color:var(--neon)}
+.text-gold{color:var(--gold)}
+.text-red{color:var(--red)}
+.text-green{color:var(--green)}
+.text-muted{color:var(--text3)}
+.mt4{margin-top:4px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}.mt24{margin-top:24px}
+.mb4{margin-bottom:4px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}
+.flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap8{gap:8px}.gap12{gap:12px}.gap16{gap:16px}
+.fw700{font-weight:700}.fs-sm{font-size:.8rem}.fs-xs{font-size:.72rem}
+.hidden{display:none!important}
+.divider{height:1px;background:var(--border);margin:16px 0}
+</style>
+</head>
+<script>
+/* ============================================================
+   PERSONAL ASCENSION — 01-data.js
+   Camada de dados: constantes, storage, seeds (PT-BR)
+   ============================================================ */
+(function () {
+  'use strict';
+  const PA = (window.PA = window.PA || {});
+
+  PA.STORAGE_KEY = 'pa_state_v2';
+  PA.VERSION = '1.0.0';
+
+  /* ---------------- Date helpers ---------------- */
+  PA.date = {
+    todayStr() {
+      return PA.date.toStr(new Date());
+    },
+    toStr(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    },
+    parse(str) {
+      const [y, m, d] = str.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    },
+    formatBR(str) {
+      if (!str) return '—';
+      const [y, m, d] = str.split('-');
+      return `${d}/${m}/${y}`;
+    },
+    addDays(str, n) {
+      const d = PA.date.parse(str);
+      d.setDate(d.getDate() + n);
+      return PA.date.toStr(d);
+    },
+    daysBetween(a, b) {
+      const da = PA.date.parse(a);
+      const db = PA.date.parse(b);
+      return Math.round((db - da) / 86400000);
+    },
+    mondayOf(str) {
+      const d = PA.date.parse(str);
+      const day = (d.getDay() + 6) % 7; // 0 = Monday
+      d.setDate(d.getDate() - day);
+      return PA.date.toStr(d);
+    },
+    weekdayLabel(str) {
+      const labels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      return labels[PA.date.parse(str).getDay()];
+    },
+    monthLabel(idx) {
+      const labels = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      return labels[idx];
+    },
+  };
+
+  /* ---------------- Constants ---------------- */
+  PA.ATTR = {
+    intelligence: { label: 'Inteligência', icon: '🧠', desc: 'Cresce com estudo, leitura e aprendizado contínuo.' },
+    discipline:   { label: 'Disciplina',   icon: '🛡️', desc: 'Cresce com consistência e sequências mantidas.' },
+    strength:     { label: 'Força',        icon: '💪', desc: 'Cresce com treino físico e esportes.' },
+    focus:        { label: 'Foco',         icon: '🎯', desc: 'Cresce com meditação e trabalho profundo.' },
+    creativity:   { label: 'Criatividade', icon: '🎨', desc: 'Cresce com escrita, arte e projetos pessoais.' },
+    health:       { label: 'Saúde',        icon: '❤️', desc: 'Cresce com sono, hidratação e cuidado físico.' },
+  };
+
+  PA.DIFFICULTY = {
+    facil:   { label: 'Fácil',   mult: 1.0, color: '#4cc9f0' },
+    medio:   { label: 'Médio',   mult: 1.3, color: '#8d7bf5' },
+    dificil: { label: 'Difícil', mult: 1.6, color: '#c850e0' },
+    extremo: { label: 'Extremo', mult: 2.0, color: '#ff4d6d' },
+  };
+
+  PA.CATEGORY = {
+    saude:        { label: 'Saúde',         icon: '❤️' },
+    estudo:       { label: 'Estudo',        icon: '🎓' },
+    leitura:      { label: 'Leitura',       icon: '📖' },
+    exercicio:    { label: 'Exercício',     icon: '🏋️' },
+    meditacao:    { label: 'Meditação',     icon: '🧘' },
+    sono:         { label: 'Sono',          icon: '😴' },
+    produtividade:{ label: 'Produtividade', icon: '✅' },
+    criatividade: { label: 'Criatividade',  icon: '🎨' },
+    lazer:        { label: 'Lazer',         icon: '🎮' },
+    outro:        { label: 'Outro',         icon: '✨' },
+  };
+
+  PA.ENERGY_PRESETS = [
+    { value: 20,  label: 'Restaura muito (+20)' },
+    { value: 10,  label: 'Restaura pouco (+10)' },
+    { value: 0,   label: 'Neutro (0)' },
+    { value: -10, label: 'Consome pouco (−10)' },
+    { value: -20, label: 'Consome muito (−20)' },
+  ];
+
+  PA.BOSS_RANKS = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'Nacional', 'Monarca'];
+
+  PA.GOAL_TERMS = {
+    curto: 'Curto prazo',
+    medio: 'Médio prazo',
+    longo: 'Longo prazo',
+  };
+
+  PA.PRIORITIES = {
+    baixa: { label: 'Baixa', color: '#4cc9f0' },
+    media: { label: 'Média', color: '#f5b942' },
+    alta:  { label: 'Alta',  color: '#ff4d6d' },
+  };
+
+  /* ---------------- Level curve ---------------- */
+  // XP necessário para subir do nível N para o N+1.
+  PA.xpForLevel = function (level) {
+    return Math.floor(95 * level + 9 * level * level);
+  };
+
+  PA.rankForLevel = function (level) {
+    if (level >= 50) return 'Monarca';
+    if (level >= 40) return 'Rank S';
+    if (level >= 30) return 'Rank A';
+    if (level >= 22) return 'Rank B';
+    if (level >= 15) return 'Rank C';
+    if (level >= 8) return 'Rank D';
+    if (level >= 4) return 'Rank E';
+    return 'Rank F';
+  };
+
+  /* ---------------- Motivational messages ---------------- */
+  PA.MOTIVATIONAL = [
+    'Cada página lida é um ponto investido no seu eu do futuro.',
+    'Consistência vence intensidade.',
+    'Você não está completando tarefas. Você está construindo seu personagem.',
+    'Pequenos passos diários constroem grandes transformações.',
+    'Disciplina é a ponte entre metas e conquistas.',
+    'O personagem que você está construindo é você mesmo, daqui a um ano.',
+    'Ninguém sente vontade todos os dias — por isso existe a disciplina.',
+    'Seu nível de hoje é a soma de todas as escolhas de ontem.',
+    'Não conte os dias. Faça os dias contarem.',
+    'A versão mais forte de você está do outro lado da consistência.',
+    'Todo mestre já foi um iniciante que se recusou a desistir.',
+    'O progresso é silencioso até, de repente, não ser mais.',
+  ];
+
+  /* ---------------- Default habits ---------------- */
+  PA.defaultHabits = function () {
+    return [
+      {
+        id: 'acordar', name: 'Acordar Cedo', icon: '⏰',
+        description: 'Levantar-se no horário planejado, sem usar o soneca.',
+        benefits: ['Sincroniza o ritmo circadiano', 'Aumenta a sensação de controle sobre o dia', 'Reduz a inércia do sono'],
+        why: 'O horário em que você acorda funciona como uma âncora do seu relógio biológico. Acordar no mesmo horário todos os dias — inclusive nos finais de semana — fortalece o ritmo circadiano, melhora a qualidade do sono nas noites seguintes e reduz o cansaço ao longo do dia.',
+        category: 'saude', difficulty: 'facil', xp: 5, coins: 2, duration: 1,
+        attribute: 'discipline', energy: 0, frequency: 'diaria', custom: false, active: true,
+      },
+      {
+        id: 'agua', name: 'Beber Água', icon: '💧',
+        description: 'Hidratar-se logo ao acordar e ao longo do dia.',
+        benefits: ['Melhora a função cognitiva', 'Regula a temperatura corporal', 'Auxilia digestão e transporte de nutrientes'],
+        why: 'Mesmo uma desidratação leve, de cerca de 1 a 2% do peso corporal, já está associada à piora de atenção, memória de curto prazo e humor. Manter-se hidratado é uma das formas mais simples de proteger sua performance cognitiva.',
+        category: 'saude', difficulty: 'facil', xp: 5, coins: 2, duration: 1,
+        attribute: 'health', energy: 5, frequency: 'diaria', custom: false, active: true,
+      },
+      {
+        id: 'cama', name: 'Arrumar a Cama', icon: '🛏️',
+        description: 'Organizar a cama assim que se levantar.',
+        benefits: ['Cria a primeira pequena vitória do dia', 'Reforça o senso de ordem', 'Ativa o efeito cascata de hábitos positivos'],
+        why: 'Arrumar a cama é o exemplo clássico de "hábito de entrada": uma ação pequena e rápida que gera sensação imediata de progresso, liberando dopamina e aumentando a chance de manter o impulso positivo pelo resto do dia.',
+        category: 'produtividade', difficulty: 'facil', xp: 5, coins: 2, duration: 3,
+        attribute: 'discipline', energy: 3, frequency: 'diaria', custom: false, active: true,
+      },
+      {
+        id: 'dentes', name: 'Escovar os Dentes', icon: '🦷',
+        description: 'Higiene bucal pela manhã e à noite.',
+        benefits: ['Previne doenças bucais', 'Reforça rotinas de autocuidado', 'Marca transições simbólicas do dia'],
+        why: 'Hábitos de higiene funcionam como "rituais de transição": sinalizam ao cérebro que um período do dia terminou e outro começou, ajudando a consolidar rotinas maiores ao redor deles, como dormir e acordar.',
+        category: 'saude', difficulty: 'facil', xp: 5, coins: 2, duration: 3,
+        attribute: 'health', energy: 2, frequency: 'diaria', custom: false, active: true,
+      },
+      {
+        id: 'roupa', name: 'Trocar de Roupa', icon: '👕',
+        description: 'Vestir-se para o dia, evitando ficar de pijama.',
+        benefits: ['Sinaliza ao cérebro a transição para o modo produtivo', 'Melhora postura e autopercepção', 'Reduz procrastinação'],
+        why: 'Esse fenômeno é estudado como "cognição corporificada": o que vestimos influencia como pensamos e agimos. Trocar de roupa cria uma fronteira psicológica clara entre o modo descanso e o modo ação.',
+        category: 'produtividade', difficulty: 'facil', xp: 5, coins: 2, duration: 3,
+        attribute: 'discipline', energy: 2, frequency: 'diaria', custom: false, active: true,
+      },
+      {
+        id: 'estudar', name: 'Estudar', icon: '📚',
+        description: 'Bloco de estudo focado em uma disciplina ou tema.',
+        benefits: ['Fortalece conexões sinápticas do conteúdo', 'Melhora memória de longo prazo via repetição espaçada', 'Desenvolve disciplina cognitiva'],
+        why: 'O estudo ativo provoca neuroplasticidade: a cada nova exposição a um conteúdo, o cérebro reforça as conexões entre os neurônios envolvidos. Estudar em blocos regulares aproveita o "efeito de espaçamento", um dos achados mais robustos da ciência da aprendizagem.',
+        category: 'estudo', difficulty: 'dificil', xp: 40, coins: 20, duration: 60,
+        attribute: 'intelligence', energy: -20, frequency: 'diaria', custom: false, active: true,
+      },
+      {
+        id: 'leitura', name: 'Leitura', icon: '📖',
+        description: 'Tempo dedicado à leitura de livros.',
+        benefits: ['Amplia vocabulário e raciocínio verbal', 'Melhora empatia e teoria da mente', 'Reduz estresse em poucos minutos'],
+        why: 'A leitura exige que o cérebro construa modelos mentais complexos, exercitando simultaneamente regiões ligadas à linguagem, memória e imaginação. Estudos mostram quedas mensuráveis de tensão após poucos minutos de leitura concentrada.',
+        category: 'leitura', difficulty: 'medio', xp: 20, coins: 10, duration: 20,
+        attribute: 'intelligence', energy: -15, frequency: 'diaria', custom: false, active: true,
+      },
+      {
+        id: 'treino', name: 'Treino Físico', icon: '🏋️',
+        description: 'Sessão de exercício físico (musculação, corrida, esportes).',
+        benefits: ['Libera BDNF, ligado à neuroplasticidade', 'Melhora humor via endorfina e serotonina', 'Fortalece o sistema cardiovascular'],
+        why: 'O exercício físico é uma das intervenções com maior evidência de melhora simultânea da saúde física e mental, aumentando a produção de BDNF — substância que favorece o crescimento de novas conexões neurais — e melhorando humor, sono e função executiva.',
+        category: 'exercicio', difficulty: 'dificil', xp: 50, coins: 25, duration: 45,
+        attribute: 'strength', energy: 15, frequency: 'diaria', custom: false, active: true,
+      },
+      {
+        id: 'meditacao', name: 'Meditação', icon: '🧘',
+        description: 'Prática de atenção plena (mindfulness).',
+        benefits: ['Reduz cortisol (hormônio do estresse)', 'Melhora a regulação emocional', 'Fortalece memória de trabalho e atenção sustentada'],
+        why: 'A meditação regular está associada a mudanças estruturais mensuráveis em regiões cerebrais ligadas a autocontrole e atenção, como o córtex pré-frontal. Com a prática, a mente leva menos tempo para voltar ao foco após uma distração.',
+        category: 'meditacao', difficulty: 'medio', xp: 25, coins: 10, duration: 10,
+        attribute: 'focus', energy: 20, frequency: 'diaria', custom: false, active: true,
+      },
+      {
+        id: 'alongamento', name: 'Alongamento', icon: '🤸',
+        description: 'Sessão breve de alongamento e mobilidade.',
+        benefits: ['Reduz tensão muscular acumulada', 'Melhora amplitude de movimento', 'Funciona como pausa ativa de recuperação'],
+        why: 'Alongar-se regularmente reduz a rigidez acumulada por longos períodos sentado ou em foco intenso, funcionando como um pequeno reset fisiológico que ajuda o corpo a sair do modo de alerta para o modo de descanso.',
+        category: 'saude', difficulty: 'facil', xp: 15, coins: 8, duration: 10,
+        attribute: 'health', energy: 10, frequency: 'diaria', custom: false, active: true,
+      },
+      {
+        id: 'dormir', name: 'Dormir Bem', icon: '😴',
+        description: 'Registrar uma noite de sono completa e no horário planejado.',
+        benefits: ['Consolida memórias formadas durante o dia', 'Restaura energia física e cognitiva', 'Regula hormônios de apetite e humor'],
+        why: 'É durante o sono profundo que o cérebro consolida memórias de curto prazo em memórias de longo prazo. Dormir menos do que o necessário prejudica mensuravelmente atenção, humor e tomada de decisão no dia seguinte.',
+        category: 'sono', difficulty: 'medio', xp: 30, coins: 15, duration: 480,
+        attribute: 'health', energy: 100, frequency: 'diaria', custom: false, active: true,
+      },
+    ];
+  };
+
+  /* ---------------- Achievements ---------------- */
+  PA.ACHIEVEMENTS = [
+    { id: 'primeiro_passo', name: 'Primeiro Passo', desc: 'Complete sua primeira tarefa.', icon: '👣', metric: 'tasksCompleted', threshold: 1, xp: 20, coins: 10 },
+    { id: 'streak7', name: 'Sequência de Ferro', desc: 'Mantenha uma sequência de 7 dias.', icon: '🔥', metric: 'streakLongest', threshold: 7, xp: 50, coins: 25, title: 'disciplinado' },
+    { id: 'streak30', name: 'Inabalável', desc: 'Mantenha uma sequência de 30 dias.', icon: '🔥', metric: 'streakLongest', threshold: 30, xp: 200, coins: 100, title: 'mente_ferro' },
+    { id: 'streak100', name: 'Lenda da Consistência', desc: 'Mantenha uma sequência de 100 dias.', icon: '🔥', metric: 'streakLongest', threshold: 100, xp: 1000, coins: 500, title: 'mestre_consistencia' },
+    { id: 'primeiro_livro', name: 'Primeira Página Virada', desc: 'Termine seu primeiro livro.', icon: '📘', metric: 'booksCompleted', threshold: 1, xp: 80, coins: 40, title: 'leitor_iniciante' },
+    { id: 'cinco_livros', name: 'Caçador de Livros', desc: 'Termine 5 livros.', icon: '📚', metric: 'booksCompleted', threshold: 5, xp: 300, coins: 150, title: 'cacador_livros' },
+    { id: 'mil_paginas', name: 'Mil Páginas', desc: 'Leia 1.000 páginas no total.', icon: '📄', metric: 'pagesRead', threshold: 1000, xp: 150, coins: 75 },
+    { id: 'cinco_mil_paginas', name: 'Devorador de Livros', desc: 'Leia 5.000 páginas no total.', icon: '📄', metric: 'pagesRead', threshold: 5000, xp: 500, coins: 250 },
+    { id: 'cem_horas_estudo', name: 'Cem Horas de Estudo', desc: 'Acumule 100 horas estudadas.', icon: '🎓', metric: 'hoursStudied', threshold: 100, xp: 400, coins: 200, title: 'erudito' },
+    { id: 'cem_treinos', name: 'Centurião', desc: 'Complete 100 treinos.', icon: '🏋️', metric: 'workoutCount', threshold: 100, xp: 400, coins: 200 },
+    { id: 'cinquenta_meditacoes', name: 'Monge do Foco', desc: 'Complete 50 sessões de meditação.', icon: '🧘', metric: 'meditationCount', threshold: 50, xp: 250, coins: 120, title: 'monge_foco' },
+    { id: 'primeiro_chefe', name: 'Primeiro Chefe Derrotado', desc: 'Derrote seu primeiro chefe.', icon: '⚔️', metric: 'bossesDefeated', threshold: 1, xp: 200, coins: 100 },
+    { id: 'cinco_chefes', name: 'Caçador de Chefes', desc: 'Derrote 5 chefes.', icon: '⚔️', metric: 'bossesDefeated', threshold: 5, xp: 600, coins: 300 },
+    { id: 'primeira_meta', name: 'Primeira Meta', desc: 'Conclua sua primeira meta.', icon: '🎯', metric: 'goalsCompleted', threshold: 1, xp: 60, coins: 30 },
+    { id: 'dez_metas', name: 'Estrategista', desc: 'Conclua 10 metas.', icon: '🎯', metric: 'goalsCompleted', threshold: 10, xp: 300, coins: 150 },
+    { id: 'nivel10', name: 'Veterano', desc: 'Alcance o nível 10.', icon: '⭐', metric: 'level', threshold: 10, xp: 100, coins: 100 },
+    { id: 'nivel25', name: 'Elite', desc: 'Alcance o nível 25.', icon: '🌟', metric: 'level', threshold: 25, xp: 300, coins: 300, title: 'rei_erudito' },
+    { id: 'primeira_ascensao', name: 'O Despertar', desc: 'Realize sua primeira Ascensão.', icon: '✨', metric: 'prestige', threshold: 1, xp: 0, coins: 500, title: 'desperto' },
+    { id: 'colecionador', name: 'Colecionador', desc: 'Crie 10 hábitos personalizados.', icon: '🧩', metric: 'customHabitsCreated', threshold: 10, xp: 150, coins: 75 },
+    { id: 'ano_completo', name: 'Ciclo Completo', desc: 'Fique ativo por 365 dias.', icon: '🗓️', metric: 'daysActive', threshold: 365, xp: 2000, coins: 1000, title: 'aprendiz_eterno' },
+  ];
+
+  /* ---------------- Titles ---------------- */
+  PA.TITLES = [
+    { id: 'aventureiro', name: 'Aventureiro(a)', desc: 'Todo mundo começa em algum lugar.' },
+    { id: 'disciplinado', name: 'Disciplinado(a)', desc: '7 dias seguidos de consistência.' },
+    { id: 'mente_ferro', name: 'Mente de Ferro', desc: '30 dias sem quebrar a sequência.' },
+    { id: 'mestre_consistencia', name: 'Mestre da Consistência', desc: '100 dias de disciplina pura.' },
+    { id: 'leitor_iniciante', name: 'Leitor Iniciante', desc: 'O primeiro de muitos livros.' },
+    { id: 'cacador_livros', name: 'Caçador de Livros', desc: 'Cinco livros conquistados.' },
+    { id: 'erudito', name: 'Erudito(a)', desc: 'Cem horas de estudo acumuladas.' },
+    { id: 'monge_foco', name: 'Monge do Foco', desc: 'Cinquenta sessões de meditação.' },
+    { id: 'rei_erudito', name: 'Rei(Rainha) Erudito(a)', desc: 'Nível 25 alcançado.' },
+    { id: 'desperto', name: 'O(A) Desperto(a)', desc: 'Atravessou sua primeira Ascensão.', prestige: true },
+    { id: 'aprendiz_eterno', name: 'Aprendiz Eterno', desc: 'Um ano inteiro de jornada.' },
+    { id: 'persistente', name: 'O(A) Persistente', desc: 'Título de prestígio — 2ª Ascensão.', prestige: true },
+    { id: 'monarca_disciplina', name: 'Monarca da Disciplina', desc: 'Título de prestígio — 3ª Ascensão.', prestige: true },
+  ];
+
+  /* ---------------- Default shop rewards ---------------- */
+  PA.defaultRewards = function () {
+    return [
+      { id: 'rw1', name: 'Um quadrado de chocolate', description: 'Uma recompensa doce e simples.', price: 150 },
+      { id: 'rw2', name: 'Açaí ou sobremesa favorita', description: 'Aproveite sem culpa — você ganhou.', price: 250 },
+      { id: 'rw3', name: 'Sessão de filme ou série', description: 'Uma pausa de entretenimento merecida.', price: 300 },
+      { id: 'rw4', name: 'Uma hora de videogame', description: 'Tempo de lazer livre de culpa.', price: 350 },
+      { id: 'rw5', name: 'Pedir aquela comida favorita', description: 'Delivery do que você está com vontade.', price: 700 },
+      { id: 'rw6', name: 'Comprar um livro novo', description: 'Investimento que também é recompensa.', price: 800 },
+      { id: 'rw7', name: 'Uma tarde totalmente livre', description: 'Sem cobranças, sem culpa.', price: 1000 },
+      { id: 'rw8', name: 'Aquele item que você está de olho', description: 'A grande recompensa — guarde moedas para ela.', price: 2500 },
+    ];
+  };
+
+  /* ---------------- Encyclopedia ---------------- */
+  PA.ENCYCLOPEDIA = [
+    {
+      id: 'leitura', title: 'Leitura', icon: '📖',
+      intro: 'Leitura é o processo de decodificar e compreender texto escrito, transformando símbolos em significado, imagens mentais e conhecimento.',
+      why: 'Poucas atividades concentram tanto ganho cognitivo por minuto investido. A leitura constrói vocabulário, raciocínio abstrato e a capacidade de manter atenção sustentada em um mundo cada vez mais fragmentado.',
+      science: 'Ao ler, o cérebro recicla circuitos originalmente dedicados ao reconhecimento de objetos e à linguagem falada para decodificar texto — um processo chamado reciclagem neuronal. A leitura de ficção, em especial, ativa redes associadas à teoria da mente: a capacidade de inferir o que outra pessoa pensa ou sente.',
+      benefits: ['Amplia vocabulário e fluência verbal', 'Melhora foco e concentração prolongada', 'Reduz estresse mensuravelmente em poucos minutos', 'Fortalece empatia, sobretudo com ficção'],
+      practice: ['Defina uma meta diária de páginas, não só de tempo', 'Leia no mesmo horário e lugar para criar associação automática', 'Tenha sempre o próximo livro definido para não perder o ritmo', 'Alterne temas densos e leves para sustentar o hábito'],
+      mistakes: ['Comprar muitos livros e não terminar nenhum', 'Tentar ler rápido demais e perder compreensão', 'Usar a leitura só como meta de quantidade, sem reflexão', 'Ler exclusivamente antes de dormir, quando o cansaço reduz a retenção'],
+      further: ['"Como Ler Livros", de Mortimer Adler', '"Hábitos Atômicos", de James Clear (capítulos sobre identidade e hábito)'],
+    },
+    {
+      id: 'meditacao', title: 'Meditação', icon: '🧘',
+      intro: 'Meditação é o treino formal da atenção: práticas que ensinam a mente a notar quando se distraiu e a voltar, de forma gentil, ao foco escolhido.',
+      why: 'A mente passa boa parte do tempo em "piloto automático", remoendo o passado ou simulando o futuro. A meditação treina o músculo de perceber isso e escolher onde colocar a atenção.',
+      science: 'Práticas regulares de mindfulness estão associadas a menor reatividade da amígdala — o centro de alarme do cérebro — e a mudanças funcionais no córtex pré-frontal, ligado a autocontrole e tomada de decisão, além de associação com queda nos níveis de cortisol, o principal hormônio do estresse.',
+      benefits: ['Reduz reatividade emocional a estressores', 'Melhora atenção sustentada e memória de trabalho', 'Diminui sintomas de ansiedade com prática regular', 'Aumenta a velocidade de retorno ao foco após distrações'],
+      practice: ['Comece com sessões curtas (5–10 min) antes de aumentar a duração', 'Use a respiração como âncora simples para iniciantes', 'Pratique sempre no mesmo horário', 'Não busque "mente vazia" — o objetivo é notar e redirecionar'],
+      mistakes: ['Esperar resultados imediatos e desistir cedo', 'Julgar a si mesmo por "não conseguir parar de pensar"', 'Praticar só quando já está estressado', 'Confundir relaxamento com o objetivo real, que é atenção treinada'],
+      further: ['"Atenção Plena", de Mark Williams e Danny Penman', '"10% Mais Feliz", de Dan Harris'],
+    },
+    {
+      id: 'exercicio', title: 'Exercício Físico', icon: '🏋️',
+      intro: 'Atividade física estruturada — musculação, corrida, esportes — que desafia o sistema cardiovascular e muscular de forma progressiva.',
+      why: 'O corpo e o cérebro evoluíram para o movimento. Quando paramos de nos mover, humor, sono, memória e capacidade de foco também pioram, não só a forma física.',
+      science: 'O exercício aeróbico aumenta a produção de BDNF (fator neurotrófico derivado do cérebro), proteína associada à formação de novos neurônios e sinapses, especialmente no hipocampo — região central da memória — além de liberar endorfina e regular neurotransmissores ligados ao humor.',
+      benefits: ['Melhora saúde cardiovascular e composição corporal', 'Favorece neuroplasticidade e memória via BDNF', 'Reduz sintomas de ansiedade e depressão leve a moderada', 'Melhora a qualidade do sono na mesma noite'],
+      practice: ['Priorize consistência sobre intensidade nas primeiras semanas', 'Combine treino de força com atividade aeróbica', 'Treine cedo se o objetivo for dormir melhor à noite', 'Respeite dias de descanso — é neles que o corpo se adapta'],
+      mistakes: ['Começar intenso demais e abandonar por dor ou lesão', 'Treinar todos os dias sem nenhuma recuperação', 'Negligenciar o sono, quando o ganho real acontece', 'Focar só em estética e ignorar sinais de fadiga'],
+      further: ['"Spark", de John Ratey'],
+    },
+    {
+      id: 'alongamento', title: 'Alongamento', icon: '🤸',
+      intro: 'Conjunto de movimentos que aumentam a amplitude articular e reduzem a tensão acumulada em músculos e tendões.',
+      why: 'Longos períodos sentado ou em foco mental intenso acumulam tensão física, mesmo sem percebermos. O alongamento é uma forma rápida de "resetar" o corpo.',
+      science: 'Alongar-se ativa o sistema nervoso parassimpático, responsável pelo estado de descanso e recuperação, contrapondo-se ao estado de alerta que predomina em momentos de estresse ou foco prolongado — daí a sensação de alívio quase imediata.',
+      benefits: ['Reduz rigidez muscular e melhora postura', 'Diminui o risco de lesões em outras atividades', 'Funciona como pausa ativa que renova o foco mental', 'Ativa o sistema nervoso de recuperação'],
+      practice: ['Alongue-se após longos períodos sentado, não só antes do treino', 'Mantenha cada posição 20–30s sem forçar dor', 'Combine com respiração lenta', 'Use como transição entre blocos de estudo intenso'],
+      mistakes: ['Alongar com movimentos bruscos', 'Forçar até sentir dor, em vez de tensão leve', 'Ignorar o alongamento por parecer "pouco produtivo"', 'Fazer só antes do treino, nunca em pausas do dia'],
+      further: ['Materiais de fisioterapia esportiva sobre mobilidade articular'],
+    },
+    {
+      id: 'sono', title: 'Sono', icon: '😴',
+      intro: 'Estado fisiológico recorrente de baixa responsividade externa, dividido em ciclos de sono leve, profundo e REM, essencial para corpo e mente.',
+      why: 'O sono não é tempo perdido — é quando o cérebro consolida memórias, remove resíduos metabólicos e o corpo repara tecidos. Cortar sono é, na prática, cortar a performance do dia seguinte.',
+      science: 'No sono de ondas lentas, o cérebro transfere memórias recém-formadas do hipocampo para áreas de armazenamento de longo prazo no córtex. No sono REM ocorre processamento emocional e consolidação motora e criativa. A privação de sono prejudica mensuravelmente atenção, humor e controle de impulsos, mesmo sem percepção consciente do déficit.',
+      benefits: ['Consolida memórias e aprendizado do dia', 'Restaura energia e regula hormônios de apetite', 'Melhora regulação emocional e tomada de decisão', 'Fortalece o sistema imunológico'],
+      practice: ['Mantenha horários regulares, inclusive nos fins de semana', 'Evite telas brilhantes na última hora antes de dormir', 'Mantenha o quarto escuro, silencioso e fresco', 'Evite cafeína nas 6–8h antes de deitar'],
+      mistakes: ['Tentar compensar noites mal dormidas só no fim de semana', 'Usar o celular na cama até pegar no sono', 'Estudar ou treinar pesado nas 2h antes de deitar', 'Tratar dormir pouco como sinal de produtividade'],
+      further: ['"Por Que Nós Dormimos", de Matthew Walker'],
+    },
+    {
+      id: 'hidratacao', title: 'Hidratação', icon: '💧',
+      intro: 'Manutenção do equilíbrio de água no corpo, essencial para praticamente todas as funções celulares, incluindo as do cérebro.',
+      why: 'O cérebro humano é composto majoritariamente de água. Desidratações leves, muitas vezes despercebidas, já afetam atenção, humor e velocidade de raciocínio.',
+      science: 'Estudos sobre desidratação leve (1–2% do peso corporal) mostram piora mensurável em testes de atenção, memória de curto prazo e percepção de esforço. O cérebro é sensível a pequenas variações no equilíbrio hídrico por depender de um ambiente eletrolítico estável entre neurônios.',
+      benefits: ['Mantém função cognitiva estável', 'Regula temperatura corporal e desempenho físico', 'Auxilia digestão e transporte de nutrientes', 'Reduz fadiga e dores de cabeça associadas'],
+      practice: ['Beba um copo de água ao acordar, antes de qualquer coisa', 'Mantenha uma garrafa visível como lembrete', 'Aumente a ingestão em dias de calor ou treino', 'Use a cor da urina como indicador prático'],
+      mistakes: ['Esperar sentir sede para beber água (sinal já tardio)', 'Substituir água por bebidas açucaradas ou cafeína', 'Ignorar hidratação em dias frios, quando a sede cai mas a necessidade não'],
+      further: ['Diretrizes de nutrição e hidratação de entidades de saúde pública'],
+    },
+    {
+      id: 'nutricao', title: 'Nutrição', icon: '🥗',
+      intro: 'Conjunto de escolhas alimentares que fornecem energia e nutrientes para o funcionamento do corpo e do cérebro.',
+      why: 'O cérebro consome uma fração desproporcional da energia do corpo. A qualidade e regularidade da alimentação afetam diretamente energia, humor e concentração ao longo do dia.',
+      science: 'Picos e quedas bruscas de glicose no sangue — comuns em dietas ricas em açúcar e carboidratos refinados — estão associados a oscilações de energia e humor. Refeições com proteína, fibra e gorduras de qualidade geram liberação mais estável de glicose, sustentando energia por mais tempo.',
+      benefits: ['Sustenta energia e foco de forma estável', 'Favorece humor mais consistente', 'Apoia a recuperação física após exercício', 'Contribui para saúde de longo prazo'],
+      practice: ['Priorize refeições com proteína e fibra', 'Evite grandes intervalos sem comer antes de blocos de foco', 'Planeje refeições com antecedência', 'Observe como diferentes alimentos afetam sua energia'],
+      mistakes: ['Pular refeições e compensar com lanches açucarados', 'Decidir só por restrição, sem sustentabilidade', 'Ignorar o efeito da alimentação no desempenho cognitivo'],
+      further: ['Diretrizes alimentares oficiais de entidades de saúde pública'],
+    },
+    {
+      id: 'deepwork', title: 'Deep Work & Foco', icon: '🎯',
+      intro: 'Deep Work é a capacidade de concentrar-se sem distração em uma tarefa cognitivamente exigente, produzindo trabalho de alto valor.',
+      why: 'Em um ambiente saturado de notificações, manter foco profundo e ininterrupto se tornou raro — e, por isso, valioso. É nesse estado que o trabalho mais significativo acontece.',
+      science: 'Cada troca de tarefa gera "resíduo de atenção": parte da mente continua processando a tarefa anterior, reduzindo a performance na nova. Blocos longos e ininterruptos evitam esse custo cumulativo e permitem estados de processamento mais profundo.',
+      benefits: ['Produz resultados melhores em menos tempo', 'Reduz o custo cognitivo de trocar de tarefa', 'Aumenta a sensação de progresso no trabalho', 'Treina a capacidade geral de sustentar atenção'],
+      practice: ['Reserve blocos fixos como compromissos inegociáveis', 'Elimine notificações durante o bloco', 'Defina um único objetivo claro antes de começar', 'Use técnicas como Pomodoro para treinar a duração do foco'],
+      mistakes: ['Tentar "foco profundo" com o celular por perto', 'Misturar e-mail e tarefas administrativas com trabalho profundo', 'Não definir objetivo claro antes da sessão', 'Achar multitarefa mais eficiente que blocos focados'],
+      further: ['"Trabalho Focado" (Deep Work), de Cal Newport'],
+    },
+    {
+      id: 'habitos', title: 'Formação de Hábitos', icon: '🔄',
+      intro: 'Hábito é um comportamento automatizado, disparado por um sinal do ambiente, que o cérebro executa com pouco ou nenhum esforço consciente.',
+      why: 'A maior parte das nossas ações diárias não vem de decisões conscientes, mas de hábitos automáticos. Entender como eles se formam é a alavanca mais poderosa para mudar comportamento de forma duradoura.',
+      science: 'O modelo de loop do hábito descreve três componentes: deixa (gatilho), rotina (a ação) e recompensa (o que reforça o ciclo). Com a repetição, essas etapas migram de regiões ligadas à decisão consciente para os gânglios da base, tornando o comportamento cada vez mais automático.',
+      benefits: ['Reduz a dependência de força de vontade ao longo do tempo', 'Permite manter comportamentos complexos com esforço mínimo', 'Cria identidade que sustenta o comportamento', 'Libera energia mental para decisões importantes'],
+      practice: ['Vincule um hábito novo a um já existente (empilhamento)', 'Reduza o atrito para começar', 'Foque em não quebrar a sequência, não em ser perfeito', 'Comemore pequenas vitórias'],
+      mistakes: ['Tentar mudar muitos hábitos ao mesmo tempo', 'Depender só de motivação, que naturalmente oscila', 'Desistir após uma falha isolada', 'Não tornar o ambiente favorável ao comportamento desejado'],
+      further: ['"Hábitos Atômicos", de James Clear', '"O Poder do Hábito", de Charles Duhigg'],
+    },
+    {
+      id: 'memoria', title: 'Memória & Aprendizagem', icon: '🧩',
+      intro: 'Conjunto de processos pelos quais o cérebro codifica, armazena e recupera informações ao longo do tempo.',
+      why: 'Estudar muito não é o mesmo que aprender bem. Entender como a memória realmente funciona permite estudar menos tempo com mais resultado.',
+      science: 'Duas descobertas centrais da ciência da aprendizagem são o efeito de espaçamento (revisar em intervalos crescentes consolida muito melhor do que estudar tudo de uma vez) e o efeito de teste (tentar recuperar uma informação da memória fortalece essa memória mais do que simplesmente reler o material).',
+      benefits: ['Aumenta retenção de longo prazo com menos tempo total', 'Reduz a sensação de "esquecer tudo" antes de provas', 'Transforma estudo passivo em aprendizado ativo', 'Aplica-se a qualquer área de conhecimento'],
+      practice: ['Use recordação ativa: feche o material e tente lembrar', 'Espace revisões em intervalos crescentes', 'Misture temas diferentes em vez de horas seguidas no mesmo (intercalação)', 'Ensine o conteúdo a alguém para testar a real compreensão'],
+      mistakes: ['Reler o material várias vezes achando que isso é estudar', 'Estudar tudo na véspera em vez de espaçar', 'Grifar textos sem depois testar a memória sobre eles', 'Confundir reconhecimento com aprendizado real'],
+      further: ['"Make It Stick", de Peter Brown, Henry Roediger III e Mark McDaniel', '"Como Aprendemos", de Stanislas Dehaene'],
+    },
+  ];
+
+  /* ---------------- Weekly quest templates ---------------- */
+  PA.WEEKLY_QUEST_TEMPLATES = [
+    { id: 'wq_paginas', name: 'Maratona de Leitura', desc: 'Leia 100 páginas essa semana.', metric: 'pagesReadWeek', target: 100, xp: 80, coins: 40, icon: '📖' },
+    { id: 'wq_estudo', name: 'Bloco de Conhecimento', desc: 'Estude 6 horas essa semana.', metric: 'studyMinutesWeek', target: 360, xp: 100, coins: 50, icon: '🎓' },
+    { id: 'wq_treino', name: 'Semana de Ferro', desc: 'Treine 4 vezes essa semana.', metric: 'workoutCountWeek', target: 4, xp: 90, coins: 45, icon: '🏋️' },
+    { id: 'wq_meditar', name: 'Mente Tranquila', desc: 'Medite 5 vezes essa semana.', metric: 'meditationCountWeek', target: 5, xp: 70, coins: 35, icon: '🧘' },
+    { id: 'wq_perfeita', name: 'Semana Perfeita', desc: 'Complete todos os hábitos do dia em 5 dias da semana.', metric: 'perfectDaysWeek', target: 5, xp: 150, coins: 75, icon: '🏆' },
+  ];
+
+  /* ---------------- New player state ---------------- */
+  PA.newState = function () {
+    const today = PA.date.todayStr();
+    return {
+      meta: { version: PA.VERSION, createdAt: today, lastSaveAt: today },
+      player: {
+        name: 'Aventureiro(a)',
+        level: 1,
+        xp: 0,
+        coins: 50,
+        prestige: 0,
+        prestigeBonus: 0,
+        mentalEnergy: 100,
+        currentTitle: 'aventureiro',
+        unlockedTitles: ['aventureiro'],
+        attributes: { intelligence: 10, discipline: 10, strength: 10, focus: 10, creativity: 10, health: 10 },
+        streak: { current: 0, longest: 0, lastActiveDate: null },
+        stats: {
+          tasksCompleted: 0, booksCompleted: 0, pagesRead: 0,
+          hoursStudied: 0, hoursExercised: 0, hoursMeditated: 0, hoursReading: 0,
+          workoutCount: 0, meditationCount: 0,
+          coinsEarned: 0, coinsSpent: 0, xpEarned: 0,
+          daysActive: 0, bossesDefeated: 0, goalsCompleted: 0, customHabitsCreated: 0,
+        },
+      },
+      habits: PA.defaultHabits(),
+      habitLog: {}, // { 'YYYY-MM-DD': { habitId: {ts, minutes} } }
+      activityLog: {}, // { 'YYYY-MM-DD': score } for heatmap
+      books: [],
+      goals: [],
+      bosses: [],
+      rewards: PA.defaultRewards(),
+      purchases: [],
+      claimedWeekly: {}, // { 'wq_id__weekKey': true }
+      schedule: { fixedEvents: [], sleepStart: '23:00', sleepEnd: '07:00' },
+      semester: { startDate: null, endDate: null, exams: [], assignments: [] },
+      achievementsUnlocked: [],
+      settings: { soundEnabled: true, reducedMotion: false },
+    };
+  };
+
+  /* ---------------- Storage engine ---------------- */
+  PA.Storage = {
+    load() {
+      try {
+        const raw = localStorage.getItem(PA.STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return PA.Storage.migrate(parsed);
+      } catch (e) {
+        console.error('Falha ao carregar dados salvos:', e);
+        return null;
+      }
+    },
+    migrate(state) {
+      // Garante que campos novos existam mesmo em saves antigos.
+      const fresh = PA.newState();
+      function merge(target, source) {
+        for (const k in source) {
+          if (!(k in target)) target[k] = source[k];
+          else if (typeof source[k] === 'object' && source[k] !== null && !Array.isArray(source[k]) &&
+                   typeof target[k] === 'object' && target[k] !== null && !Array.isArray(target[k])) {
+            merge(target[k], source[k]);
+          }
+        }
+      }
+      merge(state, fresh);
+      return state;
+    },
+    save(state) {
+      try {
+        state.meta.lastSaveAt = PA.date.todayStr();
+        localStorage.setItem(PA.STORAGE_KEY, JSON.stringify(state));
+        return true;
+      } catch (e) {
+        console.error('Falha ao salvar:', e);
+        return false;
+      }
+    },
+    reset() {
+      localStorage.removeItem(PA.STORAGE_KEY);
+    },
+    exportJSON(state) {
+      return JSON.stringify(state, null, 2);
+    },
+    importJSON(text) {
+      const parsed = JSON.parse(text);
+      if (!parsed.player || !parsed.habits) throw new Error('Arquivo inválido.');
+      return PA.Storage.migrate(parsed);
+    },
+  };
+})();
+</script>
+<script>
+/* ============================================================
+   PERSONAL ASCENSION — 02-engine.js
+   Motor do jogo: XP, níveis, hábitos, chefes, conquistas
+   ============================================================ */
+(function () {
+  'use strict';
+  const PA = window.PA;
+
+  /* ===================================================
+     PLAYER ENGINE
+     =================================================== */
+  PA.PlayerEngine = {
+    /** Devolve quantos XP faltam para o próximo nível. */
+    xpToNext(state) {
+      return PA.xpForLevel(state.player.level);
+    },
+
+    /** Adiciona XP com lógica de level-up em cascata. Devolve array de eventos. */
+    addXP(state, amount, source) {
+      const events = [];
+      const bonus = state.player.prestigeBonus || 0;
+      const total = Math.round(amount * (1 + bonus / 100));
+      state.player.xp += total;
+      state.player.stats.xpEarned += total;
+      events.push({ type: 'xp', amount: total, source });
+
+      // Level-up loop
+      let safety = 0;
+      while (state.player.xp >= PA.xpForLevel(state.player.level) && safety++ < 50) {
+        state.player.xp -= PA.xpForLevel(state.player.level);
+        state.player.level += 1;
+        const coinsBonus = 50 + state.player.level * 5;
+        PA.PlayerEngine.addCoins(state, coinsBonus, 'subida de nível');
+        events.push({ type: 'levelup', level: state.player.level, coinsBonus });
+
+        // Unlock title based on level
+        PA.AchievementEngine.checkAll(state, events);
+      }
+      return events;
+    },
+
+    addCoins(state, amount, source) {
+      state.player.coins += amount;
+      state.player.stats.coinsEarned += amount;
+    },
+
+    spendCoins(state, amount) {
+      if (state.player.coins < amount) return false;
+      state.player.coins -= amount;
+      state.player.stats.coinsSpent += amount;
+      return true;
+    },
+
+    adjustEnergy(state, delta) {
+      state.player.mentalEnergy = Math.max(0, Math.min(100, state.player.mentalEnergy + delta));
+    },
+
+    burnoutRisk(state) {
+      // simple heuristic based on current energy
+      const e = state.player.mentalEnergy;
+      if (e >= 70) return 'baixo';
+      if (e >= 40) return 'moderado';
+      if (e >= 20) return 'alto';
+      return 'critico';
+    },
+
+    burnoutMessage(state) {
+      const risk = PA.PlayerEngine.burnoutRisk(state);
+      const msgs = {
+        baixo: null,
+        moderado: 'Sua energia está caindo. Considere uma pausa leve.',
+        alto: '⚠️ Energia mental baixa. Inclua meditação, sono e alongamento hoje.',
+        critico: '🚨 Energia crítica! Seu desempenho está comprometido. Recuperação prioritária.',
+      };
+      return msgs[risk];
+    },
+
+    /** Atualiza streak com base no dia atual. */
+    updateStreak(state) {
+      const today = PA.date.todayStr();
+      const yesterday = PA.date.addDays(today, -1);
+      const last = state.player.streak.lastActiveDate;
+      if (last === today) return; // já processado hoje
+      if (last === yesterday) {
+        state.player.streak.current += 1;
+      } else if (last === null || last < yesterday) {
+        state.player.streak.current = 1;
+      }
+      if (state.player.streak.current > state.player.streak.longest) {
+        state.player.streak.longest = state.player.streak.current;
+      }
+      state.player.streak.lastActiveDate = today;
+      // active days
+      if (!state.activityLog[today]) state.player.stats.daysActive += 1;
+    },
+
+    /** Marca o dia como ativo com score proporcional à atividade. */
+    markDayActive(state, score) {
+      const today = PA.date.todayStr();
+      const prev = state.activityLog[today] || 0;
+      state.activityLog[today] = Math.min(100, prev + score);
+    },
+
+    /** Atributos que uma task incrementa. */
+    applyAttributeGain(state, habit) {
+      const attr = habit.attribute || 'discipline';
+      const gain = Math.round((habit.xp / 20) * (PA.DIFFICULTY[habit.difficulty]?.mult || 1));
+      state.player.attributes[attr] = (state.player.attributes[attr] || 10) + gain;
+    },
+  };
+
+  /* ===================================================
+     HABIT ENGINE
+     =================================================== */
+  PA.HabitEngine = {
+    /** Verifica se o hábito já foi marcado hoje. */
+    isDoneToday(state, habitId) {
+      const today = PA.date.todayStr();
+      return !!(state.habitLog[today] && state.habitLog[today][habitId]);
+    },
+
+    /** Marca hábito como concluído. Devolve array de eventos. */
+    complete(state, habitId, minutesLogged) {
+      const habit = state.habits.find(h => h.id === habitId);
+      if (!habit) return [];
+      if (PA.HabitEngine.isDoneToday(state, habitId)) return [];
+
+      const today = PA.date.todayStr();
+      if (!state.habitLog[today]) state.habitLog[today] = {};
+      state.habitLog[today][habitId] = { ts: Date.now(), minutes: minutesLogged || habit.duration || 0 };
+
+      const events = [];
+
+      // XP & Coins
+      const xpEvents = PA.PlayerEngine.addXP(state, habit.xp, habit.name);
+      PA.PlayerEngine.addCoins(state, habit.coins, habit.name);
+      events.push(...xpEvents);
+      events.push({ type: 'coins', amount: habit.coins, source: habit.name });
+      events.push({ type: 'habit', habitId, name: habit.name, xp: habit.xp, coins: habit.coins });
+
+      // Energy
+      PA.PlayerEngine.adjustEnergy(state, habit.energy || 0);
+
+      // Attribute gain
+      PA.PlayerEngine.applyAttributeGain(state, habit);
+
+      // Stats
+      state.player.stats.tasksCompleted += 1;
+      const mins = minutesLogged || habit.duration || 0;
+      const hours = mins / 60;
+      if (habit.category === 'estudo') state.player.stats.hoursStudied += hours;
+      if (habit.category === 'exercicio') { state.player.stats.hoursExercised += hours; state.player.stats.workoutCount += 1; }
+      if (habit.category === 'meditacao') { state.player.stats.hoursMeditated += hours; state.player.stats.meditationCount += 1; }
+      if (habit.category === 'leitura') state.player.stats.hoursReading += hours;
+
+      // Streak & activity
+      PA.PlayerEngine.updateStreak(state);
+      PA.PlayerEngine.markDayActive(state, 10);
+
+      // Boss damage
+      PA.BossEngine.applyDamageFromHabit(state, habit, events);
+
+      // Achievements
+      PA.AchievementEngine.checkAll(state, events);
+
+      return events;
+    },
+
+    /** Desmarca hábito (só no mesmo dia). */
+    undo(state, habitId) {
+      const today = PA.date.todayStr();
+      if (!state.habitLog[today] || !state.habitLog[today][habitId]) return;
+      const habit = state.habits.find(h => h.id === habitId);
+      if (!habit) return;
+      delete state.habitLog[today][habitId];
+      state.player.xp = Math.max(0, state.player.xp - habit.xp);
+      state.player.coins = Math.max(0, state.player.coins - habit.coins);
+      state.player.stats.tasksCompleted = Math.max(0, state.player.stats.tasksCompleted - 1);
+    },
+
+    /** Progresso do dia: [done, total]. */
+    progressToday(state) {
+      const active = state.habits.filter(h => h.active);
+      const today = PA.date.todayStr();
+      const log = state.habitLog[today] || {};
+      const done = active.filter(h => log[h.id]).length;
+      return [done, active.length];
+    },
+
+    /** Cria novo hábito personalizado. */
+    createCustom(state, fields) {
+      const id = 'custom_' + Date.now();
+      const habit = {
+        id, custom: true, active: true,
+        name: fields.name || 'Hábito',
+        description: fields.description || '',
+        benefits: [], why: '',
+        category: fields.category || 'outro',
+        difficulty: fields.difficulty || 'medio',
+        xp: Number(fields.xp) || 10,
+        coins: Number(fields.coins) || 5,
+        duration: Number(fields.duration) || 15,
+        attribute: fields.attribute || 'discipline',
+        energy: Number(fields.energy) || 0,
+        frequency: fields.frequency || 'diaria',
+        icon: fields.icon || '✨',
+      };
+      state.habits.push(habit);
+      state.player.stats.customHabitsCreated = (state.player.stats.customHabitsCreated || 0) + 1;
+      PA.AchievementEngine.checkAll(state, []);
+      return habit;
+    },
+
+    removeCustom(state, habitId) {
+      const idx = state.habits.findIndex(h => h.id === habitId && h.custom);
+      if (idx !== -1) state.habits.splice(idx, 1);
+    },
+
+    /** Retorna o log de hábitos das últimas N semanas por dia. */
+    weeklyHistory(state, weeks) {
+      const today = PA.date.todayStr();
+      const result = [];
+      for (let i = (weeks * 7 - 1); i >= 0; i--) {
+        const day = PA.date.addDays(today, -i);
+        const log = state.habitLog[day] || {};
+        const done = Object.keys(log).length;
+        const total = state.habits.filter(h => h.active).length;
+        result.push({ date: day, done, total });
+      }
+      return result;
+    },
+  };
+
+  /* ===================================================
+     READING ENGINE
+     =================================================== */
+  PA.ReadingEngine = {
+    calcPagesPerMin(pagesInFive) {
+      return pagesInFive / 5;
+    },
+    calcETA(pagesLeft, ppm) {
+      if (!ppm) return null;
+      return pagesLeft / ppm; // minutes
+    },
+    calcDailyGoal(book) {
+      if (!book.deadline) return null;
+      const today = PA.date.todayStr();
+      const daysLeft = PA.date.daysBetween(today, book.deadline);
+      if (daysLeft <= 0) return book.totalPages - book.pagesRead;
+      const remaining = book.totalPages - book.pagesRead;
+      return Math.ceil(remaining / daysLeft);
+    },
+    completionDate(book) {
+      if (!book.readingSpeedPpm || book.readingSpeedPpm <= 0) return null;
+      const remaining = book.totalPages - book.pagesRead;
+      const today = PA.date.todayStr();
+      const dailyGoal = book.dailyGoalPages || 20;
+      const ppm = book.readingSpeedPpm;
+      const minsPerDay = dailyGoal / ppm;
+      const daysNeeded = Math.ceil(remaining / dailyGoal);
+      return PA.date.addDays(today, daysNeeded);
+    },
+    logPages(state, bookId, pages) {
+      const book = state.books.find(b => b.id === bookId);
+      if (!book) return [];
+      book.pagesRead = Math.min(book.totalPages, book.pagesRead + pages);
+      state.player.stats.pagesRead += pages;
+
+      const events = [];
+      const xpGained = Math.round(pages * 0.5);
+      const coinsGained = Math.round(pages * 0.2);
+      const xpEvts = PA.PlayerEngine.addXP(state, xpGained, 'leitura');
+      PA.PlayerEngine.addCoins(state, coinsGained, 'leitura');
+      PA.PlayerEngine.adjustEnergy(state, -Math.round(pages * 0.05));
+      events.push(...xpEvts, { type: 'coins', amount: coinsGained, source: 'leitura' });
+      events.push({ type: 'reading', bookId, pages, xp: xpGained });
+
+      PA.PlayerEngine.updateStreak(state);
+      PA.PlayerEngine.markDayActive(state, 5);
+
+      if (book.pagesRead >= book.totalPages && !book.completedAt) {
+        book.completedAt = PA.date.todayStr();
+        state.player.stats.booksCompleted += 1;
+        const bonusXp = 100 + Math.floor(book.totalPages / 10);
+        const bonusXpEvts = PA.PlayerEngine.addXP(state, bonusXp, 'livro concluído');
+        PA.PlayerEngine.addCoins(state, 50, 'livro concluído');
+        events.push(...bonusXpEvts, { type: 'bookCompleted', bookId, title: book.title });
+      }
+
+      PA.AchievementEngine.checkAll(state, events);
+      return events;
+    },
+    addBook(state, fields) {
+      const id = 'book_' + Date.now();
+      const book = {
+        id,
+        title: fields.title || 'Novo Livro',
+        author: fields.author || '',
+        totalPages: Number(fields.totalPages) || 100,
+        pagesRead: Number(fields.pagesRead) || 0,
+        readingSpeedPpm: Number(fields.readingSpeedPpm) || 1,
+        deadline: fields.deadline || null,
+        dailyGoalPages: Number(fields.dailyGoalPages) || 20,
+        genre: fields.genre || '',
+        completedAt: null,
+        addedAt: PA.date.todayStr(),
+      };
+      state.books.push(book);
+      return book;
+    },
+  };
+
+  /* ===================================================
+     BOSS ENGINE
+     =================================================== */
+  PA.BossEngine = {
+    addBoss(state, fields) {
+      const id = 'boss_' + Date.now();
+      const boss = {
+        id,
+        name: fields.name || 'Novo Chefe',
+        description: fields.description || '',
+        rank: fields.rank || 'D',
+        hp: Number(fields.hp) || 500,
+        currentHp: Number(fields.hp) || 500,
+        deadline: fields.deadline || null,
+        xpReward: Number(fields.xpReward) || 200,
+        coinReward: Number(fields.coinReward) || 100,
+        linkedHabitIds: fields.linkedHabitIds || [],
+        linkedCategories: fields.linkedCategories || [],
+        createdAt: PA.date.todayStr(),
+        defeatedAt: null,
+        titleReward: fields.titleReward || null,
+      };
+      state.bosses.push(boss);
+      return boss;
+    },
+    applyDamageFromHabit(state, habit, events) {
+      state.bosses.forEach(boss => {
+        if (boss.defeatedAt) return;
+        const linked = boss.linkedHabitIds.includes(habit.id) || boss.linkedCategories.includes(habit.category);
+        if (!linked) return;
+        const mult = PA.DIFFICULTY[habit.difficulty]?.mult || 1;
+        const dmg = Math.round(habit.xp * mult * 0.4);
+        boss.currentHp = Math.max(0, boss.currentHp - dmg);
+        events.push({ type: 'bossDamage', bossId: boss.id, bossName: boss.name, damage: dmg, remaining: boss.currentHp });
+        if (boss.currentHp <= 0 && !boss.defeatedAt) {
+          boss.defeatedAt = PA.date.todayStr();
+          state.player.stats.bossesDefeated = (state.player.stats.bossesDefeated || 0) + 1;
+          const bXpEvts = PA.PlayerEngine.addXP(state, boss.xpReward, `chefe: ${boss.name}`);
+          PA.PlayerEngine.addCoins(state, boss.coinReward, `chefe: ${boss.name}`);
+          events.push(...bXpEvts, { type: 'bossDefeated', bossId: boss.id, bossName: boss.name });
+          PA.AchievementEngine.checkAll(state, events);
+        }
+      });
+    },
+    progress(boss) {
+      if (boss.hp <= 0) return 100;
+      return Math.round(((boss.hp - boss.currentHp) / boss.hp) * 100);
+    },
+  };
+
+  /* ===================================================
+     GOAL ENGINE
+     =================================================== */
+  PA.GoalEngine = {
+    add(state, fields) {
+      const id = 'goal_' + Date.now();
+      state.goals.push({
+        id,
+        title: fields.title || 'Nova Meta',
+        description: fields.description || '',
+        category: fields.category || 'outro',
+        term: fields.term || 'medio',
+        priority: fields.priority || 'media',
+        deadline: fields.deadline || null,
+        xpReward: Number(fields.xpReward) || 50,
+        coinReward: Number(fields.coinReward) || 25,
+        completedAt: null,
+        createdAt: PA.date.todayStr(),
+        progress: 0,
+      });
+      return id;
+    },
+    complete(state, goalId, events = []) {
+      const goal = state.goals.find(g => g.id === goalId);
+      if (!goal || goal.completedAt) return;
+      goal.completedAt = PA.date.todayStr();
+      goal.progress = 100;
+      state.player.stats.goalsCompleted = (state.player.stats.goalsCompleted || 0) + 1;
+      const xpEvts = PA.PlayerEngine.addXP(state, goal.xpReward, `meta: ${goal.title}`);
+      PA.PlayerEngine.addCoins(state, goal.coinReward, `meta: ${goal.title}`);
+      events.push(...xpEvts, { type: 'goalCompleted', goalId, title: goal.title });
+      PA.AchievementEngine.checkAll(state, events);
+    },
+    setProgress(state, goalId, pct) {
+      const goal = state.goals.find(g => g.id === goalId);
+      if (!goal) return;
+      goal.progress = Math.max(0, Math.min(100, pct));
+    },
+  };
+
+  /* ===================================================
+     QUEST ENGINE (Weekly)
+     =================================================== */
+  PA.QuestEngine = {
+    weekKey() {
+      return PA.date.mondayOf(PA.date.todayStr());
+    },
+    weekProgress(state) {
+      const wk = PA.QuestEngine.weekKey();
+      const today = PA.date.todayStr();
+      const mondayStr = PA.date.mondayOf(today);
+
+      // Accumulate week stats
+      let pagesReadWeek = 0, studyMinutesWeek = 0, workoutCountWeek = 0,
+          meditationCountWeek = 0, perfectDaysWeek = 0;
+
+      for (let i = 0; i < 7; i++) {
+        const day = PA.date.addDays(mondayStr, i);
+        if (day > today) break;
+        const log = state.habitLog[day] || {};
+        const ids = Object.keys(log);
+
+        ids.forEach(hid => {
+          const habit = state.habits.find(h => h.id === hid);
+          if (!habit) return;
+          if (habit.category === 'leitura') pagesReadWeek += 0; // pages tracked separately
+          if (habit.category === 'estudo') studyMinutesWeek += (log[hid].minutes || habit.duration || 60);
+          if (habit.category === 'exercicio') workoutCountWeek += 1;
+          if (habit.category === 'meditacao') meditationCountWeek += 1;
+        });
+
+        const activeCount = state.habits.filter(h => h.active).length;
+        if (activeCount > 0 && ids.length >= activeCount) perfectDaysWeek += 1;
+      }
+
+      // Pages read this week from books
+      state.books.forEach(book => {
+        // approximate: not tracked per-day so use stat (rough)
+      });
+
+      return { pagesReadWeek, studyMinutesWeek, workoutCountWeek, meditationCountWeek, perfectDaysWeek, weekKey: wk };
+    },
+    claimQuest(state, questId, events = []) {
+      const wk = PA.QuestEngine.weekKey();
+      const key = `${questId}__${wk}`;
+      if (state.claimedWeekly[key]) return false;
+      const tpl = PA.WEEKLY_QUEST_TEMPLATES.find(q => q.id === questId);
+      if (!tpl) return false;
+      state.claimedWeekly[key] = true;
+      const xpEvts = PA.PlayerEngine.addXP(state, tpl.xp, `missão: ${tpl.name}`);
+      PA.PlayerEngine.addCoins(state, tpl.coins, `missão: ${tpl.name}`);
+      events.push(...xpEvts, { type: 'questClaimed', questId, name: tpl.name, xp: tpl.xp });
+      return true;
+    },
+    isClaimed(state, questId) {
+      const key = `${questId}__${PA.QuestEngine.weekKey()}`;
+      return !!state.claimedWeekly[key];
+    },
+  };
+
+  /* ===================================================
+     SCHEDULE ENGINE
+     =================================================== */
+  PA.ScheduleEngine = {
+    suggestSlots(state) {
+      const fixed = state.schedule.fixedEvents || [];
+      const sleepStart = state.schedule.sleepStart || '23:00';
+      const sleepEnd = state.schedule.sleepEnd || '07:00';
+      const suggestions = [];
+      const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+
+      const occupiedPairs = fixed.map(e => [toMin(e.start), toMin(e.end)]);
+      const sleepStartMin = toMin(sleepStart);
+      const sleepEndMin = toMin(sleepEnd);
+
+      // Block sleep (across midnight)
+      if (sleepStartMin > sleepEndMin) {
+        occupiedPairs.push([sleepStartMin, 1440]);
+        occupiedPairs.push([0, sleepEndMin]);
+      } else {
+        occupiedPairs.push([sleepStartMin, sleepEndMin]);
+      }
+
+      const isOccupied = (start, end) => occupiedPairs.some(([s, e]) => start < e && end > s);
+
+      const candidates = [
+        { name: 'Meditação', start: 360, dur: 10, icon: '🧘', category: 'meditacao' },
+        { name: 'Alongamento', start: 375, dur: 10, icon: '🤸', category: 'saude' },
+        { name: 'Leitura', start: 750, dur: 20, icon: '📖', category: 'leitura' },
+        { name: 'Treino', start: 1020, dur: 45, icon: '🏋️', category: 'exercicio' },
+        { name: 'Estudo Noturno', start: 1110, dur: 60, icon: '📚', category: 'estudo' },
+      ];
+
+      const toHHMM = min => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+
+      candidates.forEach(c => {
+        for (let delta = 0; delta <= 60; delta += 15) {
+          const s = c.start + delta;
+          const e = s + c.dur;
+          if (e > 1440) break;
+          if (!isOccupied(s, e)) {
+            suggestions.push({ name: c.name, icon: c.icon, start: toHHMM(s), end: toHHMM(e), dur: c.dur, category: c.category });
+            break;
+          }
+        }
+      });
+      return suggestions;
+    },
+  };
+
+  /* ===================================================
+     ACHIEVEMENT ENGINE
+     =================================================== */
+  PA.AchievementEngine = {
+    checkAll(state, events) {
+      PA.ACHIEVEMENTS.forEach(ach => {
+        if (state.achievementsUnlocked.includes(ach.id)) return;
+        const val = PA.AchievementEngine._getValue(state, ach.metric);
+        if (val >= ach.threshold) {
+          state.achievementsUnlocked.push(ach.id);
+          PA.PlayerEngine.addXP(state, ach.xp || 0, `conquista: ${ach.name}`);
+          PA.PlayerEngine.addCoins(state, ach.coins || 0, `conquista: ${ach.name}`);
+          if (ach.title) PA.AchievementEngine.unlockTitle(state, ach.title);
+          events.push({ type: 'achievement', id: ach.id, name: ach.name, icon: ach.icon, xp: ach.xp, coins: ach.coins });
+        }
+      });
+    },
+    _getValue(state, metric) {
+      const p = state.player;
+      const m = {
+        tasksCompleted: p.stats.tasksCompleted,
+        booksCompleted: p.stats.booksCompleted,
+        pagesRead: p.stats.pagesRead,
+        hoursStudied: p.stats.hoursStudied,
+        workoutCount: p.stats.workoutCount,
+        meditationCount: p.stats.meditationCount,
+        bossesDefeated: p.stats.bossesDefeated,
+        goalsCompleted: p.stats.goalsCompleted,
+        customHabitsCreated: p.stats.customHabitsCreated,
+        daysActive: p.stats.daysActive,
+        streakLongest: p.streak.longest,
+        level: p.level,
+        prestige: p.prestige,
+      };
+      return m[metric] || 0;
+    },
+    unlockTitle(state, titleId) {
+      if (!state.player.unlockedTitles.includes(titleId)) {
+        state.player.unlockedTitles.push(titleId);
+      }
+    },
+    setTitle(state, titleId) {
+      if (state.player.unlockedTitles.includes(titleId)) {
+        state.player.currentTitle = titleId;
+      }
+    },
+  };
+
+  /* ===================================================
+     PRESTIGE ENGINE
+     =================================================== */
+  PA.PrestigeEngine = {
+    canPrestige(state) {
+      return state.player.level >= 30;
+    },
+    prestige(state, events = []) {
+      if (!PA.PrestigeEngine.canPrestige(state)) return false;
+      state.player.prestige += 1;
+      state.player.prestigeBonus = state.player.prestige * 5; // +5% XP per prestige
+      state.player.level = 1;
+      state.player.xp = 0;
+      state.player.coins = Math.floor(state.player.coins * 0.1); // keep 10%
+      state.player.mentalEnergy = 100;
+      events.push({ type: 'prestige', count: state.player.prestige });
+      const titleMap = { 1: 'desperto', 2: 'persistente', 3: 'monarca_disciplina' };
+      if (titleMap[state.player.prestige]) {
+        PA.AchievementEngine.unlockTitle(state, titleMap[state.player.prestige]);
+        state.player.currentTitle = titleMap[state.player.prestige];
+      }
+      PA.AchievementEngine.checkAll(state, events);
+      return true;
+    },
+  };
+
+  /* ===================================================
+     SHOP ENGINE
+     =================================================== */
+  PA.ShopEngine = {
+    buy(state, rewardId, events = []) {
+      const reward = state.rewards.find(r => r.id === rewardId);
+      if (!reward) return { ok: false, msg: 'Recompensa não encontrada.' };
+      if (state.player.coins < reward.price) return { ok: false, msg: 'Moedas insuficientes!' };
+      PA.PlayerEngine.spendCoins(state, reward.price);
+      state.purchases.push({ rewardId, ts: Date.now(), name: reward.name, price: reward.price });
+      events.push({ type: 'purchase', name: reward.name, price: reward.price });
+      return { ok: true };
+    },
+    addReward(state, fields) {
+      const id = 'rw_' + Date.now();
+      state.rewards.push({ id, name: fields.name, description: fields.description || '', price: Number(fields.price) || 100 });
+    },
+    removeReward(state, id) {
+      const idx = state.rewards.findIndex(r => r.id === id);
+      if (idx !== -1) state.rewards.splice(idx, 1);
+    },
+  };
+
+  /* ===================================================
+     STATISTICS ENGINE
+     =================================================== */
+  PA.StatEngine = {
+    /** Retorna [{ date, score }] para o heatmap dos últimos 365 dias. */
+    heatmapData(state) {
+      const today = PA.date.todayStr();
+      const result = [];
+      for (let i = 364; i >= 0; i--) {
+        const day = PA.date.addDays(today, -i);
+        result.push({ date: day, score: state.activityLog[day] || 0 });
+      }
+      return result;
+    },
+    /** Retorna pares [label, value] para o gráfico semanal de conclusão de hábitos. */
+    weeklyCompletion(state) {
+      const today = PA.date.todayStr();
+      return Array.from({ length: 7 }, (_, i) => {
+        const day = PA.date.addDays(today, -(6 - i));
+        const log = state.habitLog[day] || {};
+        const done = Object.keys(log).length;
+        return { date: day, day: PA.date.weekdayLabel(day), done };
+      });
+    },
+    totalReadingHours(state) {
+      return state.books.reduce((acc, b) => acc + ((b.pagesRead / (b.readingSpeedPpm || 1)) / 60), 0);
+    },
+    estimatedYearlyBooks(state) {
+      const ph = state.player.stats.pagesRead;
+      if (!ph) return 0;
+      const daysActive = Math.max(1, state.player.stats.daysActive);
+      const pagesPerDay = ph / daysActive;
+      const avgBookPages = 300;
+      return Math.round((pagesPerDay * 365) / avgBookPages);
+    },
+  };
+
+  /* ===================================================
+     RECOMMENDATION ENGINE
+     =================================================== */
+  PA.RecommendEngine = {
+    analyze(state) {
+      const tips = [];
+      const { mentalEnergy } = state.player;
+      const bMsg = PA.PlayerEngine.burnoutMessage(state);
+      if (bMsg) tips.push({ icon: '🔋', text: bMsg });
+
+      // Best day to study
+      const dayCounts = {};
+      Object.entries(state.habitLog).forEach(([date, log]) => {
+        const dow = PA.date.parse(date).getDay();
+        const studyCount = Object.keys(log).filter(id => {
+          const h = state.habits.find(h => h.id === id);
+          return h && h.category === 'estudo';
+        }).length;
+        dayCounts[dow] = (dayCounts[dow] || 0) + studyCount;
+      });
+      const labels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      const best = Object.entries(dayCounts).sort((a, b) => b[1] - a[1])[0];
+      if (best) tips.push({ icon: '🎓', text: `Você estuda mais nas ${labels[best[0]]}s.` });
+
+      // Consistency tip
+      const streak = state.player.streak.current;
+      if (streak >= 7) tips.push({ icon: '🔥', text: `Impressionante! ${streak} dias seguidos de consistência.` });
+      else if (streak < 3) tips.push({ icon: '💡', text: 'Construa sua sequência completando hábitos hoje.' });
+
+      // Books tip
+      const booksInProgress = state.books.filter(b => !b.completedAt && b.pagesRead > 0);
+      if (booksInProgress.length > 2) tips.push({ icon: '📚', text: 'Você tem vários livros em andamento. Foque em terminar um antes de começar outro.' });
+
+      // Energy tip
+      if (mentalEnergy >= 80) tips.push({ icon: '⚡', text: 'Energia alta! Bom momento para tarefas cognitivas exigentes.' });
+
+      return tips;
+    },
+  };
+})();
+</script>
+<body>
+
+<!-- Particles background -->
+<div class="particles" id="particles"></div>
+
+<!-- Level-up overlay -->
+<div id="levelup-overlay">
+  <div class="lu-label">SUBIU DE NÍVEL</div>
+  <div id="lu-level" class="lu-level">12</div>
+  <div id="lu-rank" class="lu-rank">Rank D</div>
+  <div id="lu-title" style="font-size:.9rem;color:var(--gold);margin-top:4px"></div>
+  <div id="lu-coins" style="font-size:.85rem;color:var(--text2);margin-top:6px"></div>
+  <button class="btn btn-primary lu-btn" onclick="document.getElementById('levelup-overlay').classList.remove('show')">Continuar ⚔️</button>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- APP SHELL -->
+<div id="app">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside id="sidebar">
+    <div id="sidebar-brand">
+      <div class="brand-name">⚔️ Personal Ascension</div>
+      <div class="brand-sub">Sistema de Evolução Pessoal</div>
+    </div>
+    <div id="sidebar-player-mini">
+      <div class="mini-name" id="sb-name">Aventureiro(a)</div>
+      <div class="mini-level" id="sb-level">Nível 1 · Rank F</div>
+      <div class="mini-xpbar"><div class="mini-xpfill" id="sb-xpfill" style="width:0%"></div></div>
+    </div>
+    <nav id="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <div class="nav-item active" data-page="dashboard"><span class="nav-icon">🏠</span> Dashboard</div>
+      <div class="nav-item" data-page="character"><span class="nav-icon">⚔️</span> Personagem</div>
+      <div class="nav-item" data-page="habits"><span class="nav-icon">✅</span> Hábitos Diários</div>
+      <div class="nav-item" data-page="reading"><span class="nav-icon">📖</span> Leitura</div>
+
+      <div class="nav-section-label">Quests</div>
+      <div class="nav-item" data-page="quests"><span class="nav-icon">🗡️</span> Missões Semanais</div>
+      <div class="nav-item" data-page="bosses"><span class="nav-icon">👹</span> Chefes</div>
+      <div class="nav-item" data-page="goals"><span class="nav-icon">🎯</span> Metas</div>
+
+      <div class="nav-section-label">Progresso</div>
+      <div class="nav-item" data-page="statistics"><span class="nav-icon">📊</span> Estatísticas</div>
+      <div class="nav-item" data-page="achievements"><span class="nav-icon">🏆</span> Conquistas</div>
+      <div class="nav-item" data-page="shop"><span class="nav-icon">🛒</span> Loja</div>
+
+      <div class="nav-section-label">Planejamento</div>
+      <div class="nav-item" data-page="schedule"><span class="nav-icon">📅</span> Agenda</div>
+      <div class="nav-item" data-page="semester"><span class="nav-icon">🎓</span> Semestre</div>
+
+      <div class="nav-section-label">Conhecimento</div>
+      <div class="nav-item" data-page="encyclopedia"><span class="nav-icon">📚</span> Enciclopédia</div>
+
+      <div class="nav-section-label">Sistema</div>
+      <div class="nav-item" data-page="settings"><span class="nav-icon">⚙️</span> Configurações</div>
+      <div class="nav-item" data-page="backup"><span class="nav-icon">💾</span> Backup</div>
+    </nav>
+    <div id="sidebar-footer">v1.0 · 100% Offline</div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div id="main">
+    <header id="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button id="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <div id="topbar-title">Dashboard</div>
+      </div>
+      <div id="topbar-right">
+        <div class="topbar-stat"><span class="ts-icon">⚡</span><span class="ts-val topbar-energy" id="tb-energy">100</span></div>
+        <div class="topbar-stat"><span class="ts-icon">🪙</span><span class="ts-val topbar-coin" id="tb-coins">0</span></div>
+        <div class="topbar-stat"><span class="ts-icon">🔥</span><span class="ts-val" id="tb-streak">0</span></div>
+      </div>
+    </header>
+
+    <div id="pages">
+
+      <!-- ==================== DASHBOARD ==================== -->
+      <div class="page active" id="page-dashboard">
+        <div id="dash-greeting">Bem-vindo(a) de volta, <span id="dash-name">Aventureiro(a)</span>!</div>
+        <div id="dash-motivational"></div>
+
+        <div id="dash-overview">
+          <div class="dash-stat-card"><div class="dsc-icon">⭐</div><div class="dsc-val text-neon" id="dash-level">1</div><div class="dsc-label">Nível</div></div>
+          <div class="dash-stat-card"><div class="dsc-icon">🔥</div><div class="dsc-val" id="dash-streak">0</div><div class="dsc-label">Sequência</div></div>
+          <div class="dash-stat-card"><div class="dsc-icon">🪙</div><div class="dsc-val text-gold" id="dash-coins">0</div><div class="dsc-label">Moedas</div></div>
+          <div class="dash-stat-card"><div class="dsc-icon">⚡</div><div class="dsc-val text-green" id="dash-energy">100</div><div class="dsc-label">Energia Mental</div></div>
+          <div class="dash-stat-card"><div class="dsc-icon">📖</div><div class="dsc-val" id="dash-pages">0</div><div class="dsc-label">Páginas Lidas</div></div>
+          <div class="dash-stat-card"><div class="dsc-icon">✅</div><div class="dsc-val" id="dash-tasks">0</div><div class="dsc-label">Tarefas Feitas</div></div>
+        </div>
+
+        <div id="dash-xp-section" class="card">
+          <div id="dash-xp-row">
+            <span>XP: <strong id="dash-xp-cur">0</strong> / <strong id="dash-xp-next">100</strong></span>
+            <span id="dash-rank-label" class="badge badge-blue">Rank F</span>
+          </div>
+          <div class="prog-wrap prog-xp" style="height:14px">
+            <div class="prog-fill" id="dash-xp-bar" style="width:0%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.75rem;color:var(--text3)">
+            <span id="dash-title-label">Título: Aventureiro(a)</span>
+            <span>Prestígio: <span id="dash-prestige">0</span></span>
+          </div>
+        </div>
+
+        <div id="dash-progress-grid" class="mt16">
+          <div class="progress-section">
+            <div class="ps-label">⚡ Energia Mental</div>
+            <div class="ps-num" id="dash-energy-val">100/100</div>
+            <div class="prog-wrap" style="height:10px"><div id="dash-energy-bar" class="prog-fill energy-bar-fill" style="width:100%" data-level="high"></div></div>
+            <div id="dash-burnout-msg" style="font-size:.75rem;color:var(--red);margin-top:6px"></div>
+          </div>
+          <div class="progress-section">
+            <div class="ps-label">✅ Hábitos Hoje</div>
+            <div class="ps-num" id="dash-habit-count">0 / 0</div>
+            <div class="prog-wrap" style="height:10px"><div id="dash-habit-bar" class="prog-fill prog-xp" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <div id="dash-habits-quick" class="mt20">
+          <div class="dh-header">
+            <div class="dh-title">Hábitos de Hoje</div>
+            <div class="dh-prog" id="dash-habit-prog-label"></div>
+          </div>
+          <div id="dash-habits-list"></div>
+          <div style="margin-top:12px;text-align:center">
+            <button class="btn btn-secondary btn-sm" onclick="navigate('habits')">Ver todos os hábitos →</button>
+          </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="card mt20">
+          <div class="card-header"><div class="card-title"><span class="ct-icon">💡</span> Recomendações</div></div>
+          <div id="rec-list"></div>
+        </div>
+
+        <!-- Active bosses preview -->
+        <div id="dash-bosses-wrap" class="mt20" style="display:none">
+          <div class="section-title">👹 Chefes Ativos</div>
+          <div id="dash-bosses-list"></div>
+        </div>
+      </div>
+
+      <!-- ==================== CHARACTER ==================== -->
+      <div class="page" id="page-character">
+        <div class="section-title">⚔️ Ficha do Personagem</div>
+
+        <div id="char-header">
+          <div id="char-avatar">⚔️</div>
+          <div id="char-info">
+            <div id="char-name" style="font-size:1.4rem;font-weight:800">Aventureiro(a)</div>
+            <div id="char-rank-title">
+              <span class="badge badge-blue" id="char-rank">Rank F</span>
+              <span class="badge badge-gold" id="char-title-badge">Aventureiro(a)</span>
+            </div>
+            <div style="font-size:.8rem;color:var(--text3);margin-top:4px">XP: <span id="char-xp-cur">0</span> / <span id="char-xp-next">100</span></div>
+            <div id="char-xp-bar-wrap" class="mt8">
+              <div class="prog-wrap prog-xp" style="height:10px"><div class="prog-fill" id="char-xp-bar" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div id="char-level-big">1</div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title mb12"><span class="ct-icon">🎯</span> Atributos</div>
+            <div id="char-attributes"></div>
+          </div>
+          <div class="card">
+            <div class="card-title mb12"><span class="ct-icon">📊</span> Estatísticas</div>
+            <div id="char-stats-list" style="display:flex;flex-direction:column;gap:8px;font-size:.83rem"></div>
+          </div>
+        </div>
+
+        <div class="card mt16">
+          <div class="card-title mb12"><span class="ct-icon">⚡</span> Energia Mental</div>
+          <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:6px">
+            <span id="char-energy-label">100 / 100</span>
+            <span id="char-energy-risk" class="badge badge-green">Risco Baixo</span>
+          </div>
+          <div class="prog-wrap" style="height:14px"><div id="char-energy-bar" class="prog-fill energy-bar-fill" style="width:100%" data-level="high"></div></div>
+          <div style="font-size:.75rem;color:var(--text3);margin-top:8px">A energia é restaurada por meditação, sono e pausas ativas.</div>
+        </div>
+
+        <div class="card mt16">
+          <div class="card-title mb12"><span class="ct-icon">🏷️</span> Títulos Desbloqueados</div>
+          <div id="char-titles-grid"></div>
+        </div>
+
+        <div class="prestige-section mt16">
+          <div class="card-title mb8"><span class="ct-icon">✨</span> Ascensão (Prestígio)</div>
+          <p style="font-size:.83rem;color:var(--text2);margin-bottom:12px">Ao ascender, você reinicia o nível mantendo conquistas, títulos e conhecimento. Cada ascensão concede +5% de XP permanente.</p>
+          <div style="font-size:.85rem;margin-bottom:12px">Prestígio atual: <strong id="char-prestige-count" style="color:var(--neon2)">0</strong> &nbsp;·&nbsp; Bônus de XP: <strong id="char-prestige-bonus" style="color:var(--neon)">0%</strong></div>
+          <div id="char-prestige-req" style="font-size:.8rem;color:var(--text3);margin-bottom:12px"></div>
+          <button class="btn btn-secondary" id="btn-prestige" onclick="doPrestige()">⬆ Ascender</button>
+        </div>
+      </div>
+
+      <!-- ==================== HABITS ==================== -->
+      <div class="page" id="page-habits">
+        <div class="section-title">✅ Hábitos Diários</div>
+
+        <div class="card mb16">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div>
+              <div style="font-size:.9rem;font-weight:700">Progresso de Hoje</div>
+              <div style="font-size:.8rem;color:var(--text3);margin-top:2px">Complete seus hábitos para ganhar XP e Moedas.</div>
+            </div>
+            <div style="text-align:right">
+              <div class="text-neon fw700" id="habits-prog-label" style="font-size:1.1rem">0 / 0</div>
+              <div style="font-size:.72rem;color:var(--text3)">concluídos hoje</div>
+            </div>
+          </div>
+          <div class="prog-wrap prog-xp mt12" style="height:10px">
+            <div class="prog-fill" id="habits-prog-bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div id="habits-filter-row">
+          <button class="filter-btn active" data-cat="all">Todos</button>
+          <button class="filter-btn" data-cat="saude">❤️ Saúde</button>
+          <button class="filter-btn" data-cat="estudo">🎓 Estudo</button>
+          <button class="filter-btn" data-cat="leitura">📖 Leitura</button>
+          <button class="filter-btn" data-cat="exercicio">🏋️ Exercício</button>
+          <button class="filter-btn" data-cat="meditacao">🧘 Meditação</button>
+          <button class="filter-btn" data-cat="sono">😴 Sono</button>
+          <button class="filter-btn" data-cat="outro">✨ Outro</button>
+        </div>
+
+        <div id="habits-list-wrap"></div>
+
+        <div class="mt20">
+          <button class="btn btn-primary" onclick="openModal('modal-add-habit')">+ Criar Hábito Personalizado</button>
+        </div>
+      </div>
+
+      <!-- ==================== READING ==================== -->
+      <div class="page" id="page-reading">
+        <div class="section-title">📖 Sistema de Leitura</div>
+
+        <div class="card mb16">
+          <div class="card-title mb12"><span class="ct-icon">📊</span> Resumo de Leitura</div>
+          <div class="grid-4" id="reading-stats-grid">
+            <div class="stat-block"><div class="sb-val" id="rs-books">0</div><div class="sb-label">Livros Concluídos</div></div>
+            <div class="stat-block"><div class="sb-val" id="rs-pages">0</div><div class="sb-label">Páginas Lidas</div></div>
+            <div class="stat-block"><div class="sb-val" id="rs-yearly-books">0</div><div class="sb-label">Livros/Ano (est.)</div></div>
+            <div class="stat-block"><div class="sb-val" id="rs-hours">0h</div><div class="sb-label">Horas de Leitura</div></div>
+          </div>
+        </div>
+
+        <div class="book-add-form">
+          <div class="card-title mb12"><span class="ct-icon">➕</span> Adicionar Livro</div>
+          <div class="grid-2 mb12">
+            <div class="form-group"><label class="form-label">Título</label><input id="book-title" placeholder="Ex: Hábitos Atômicos"/></div>
+            <div class="form-group"><label class="form-label">Autor</label><input id="book-author" placeholder="Ex: James Clear"/></div>
+          </div>
+          <div class="grid-2 mb12">
+            <div class="form-group"><label class="form-label">Total de Páginas</label><input id="book-pages" type="number" min="1" placeholder="450"/></div>
+            <div class="form-group"><label class="form-label">Páginas já lidas</label><input id="book-read" type="number" min="0" value="0"/></div>
+          </div>
+          <div class="grid-2 mb12">
+            <div class="form-group">
+              <label class="form-label">Velocidade: páginas em 5 min</label>
+              <input id="book-speed" type="number" min="1" placeholder="7" title="Quantas páginas você lê em 5 minutos?"/>
+            </div>
+            <div class="form-group"><label class="form-label">Meta: terminar em (dias)</label><input id="book-days" type="number" min="1" placeholder="15"/></div>
+          </div>
+          <button class="btn btn-primary" onclick="addBook()">Adicionar Livro 📚</button>
+        </div>
+
+        <div class="section-title">Minha Estante</div>
+        <div id="books-grid"></div>
+      </div>
+
+      <!-- ==================== QUESTS ==================== -->
+      <div class="page" id="page-quests">
+        <div class="section-title">🗡️ Missões Semanais</div>
+        <div style="font-size:.83rem;color:var(--text3);margin-bottom:20px">Missões resetam toda segunda-feira. Complete-as para ganhar recompensas extras.</div>
+        <div id="quests-list" style="display:flex;flex-direction:column;gap:12px"></div>
+
+        <div class="card mt24">
+          <div class="card-title mb12"><span class="ct-icon">📅</span> Missões Diárias</div>
+          <div style="font-size:.83rem;color:var(--text2);margin-bottom:12px">Conclua seus hábitos do dia para completar as missões diárias automaticamente.</div>
+          <div id="daily-quests-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+
+      <!-- ==================== BOSSES ==================== -->
+      <div class="page" id="page-bosses">
+        <div class="section-title">👹 Sistema de Chefes</div>
+        <div style="font-size:.83rem;color:var(--text3);margin-bottom:20px">Grandes desafios viram Chefes. Cada hábito realizado causa dano ao chefe vinculado.</div>
+        <div class="mb16">
+          <button class="btn btn-primary" onclick="openModal('modal-add-boss')">+ Criar Chefe</button>
+        </div>
+        <div id="bosses-grid"></div>
+      </div>
+
+      <!-- ==================== GOALS ==================== -->
+      <div class="page" id="page-goals">
+        <div class="section-title">🎯 Metas</div>
+        <div class="mb16">
+          <button class="btn btn-primary" onclick="openModal('modal-add-goal')">+ Nova Meta</button>
+        </div>
+        <div id="goals-list"></div>
+      </div>
+
+      <!-- ==================== STATISTICS ==================== -->
+      <div class="page" id="page-statistics">
+        <div class="section-title">📊 Estatísticas</div>
+
+        <div id="stats-overview-grid"></div>
+
+        <div class="card mb16" id="week-chart-wrap">
+          <div class="card-title mb12"><span class="ct-icon">📅</span> Hábitos por Dia (7 dias)</div>
+          <div id="bar-chart"></div>
+        </div>
+
+        <div class="card mb16">
+          <div class="card-title mb12"><span class="ct-icon">🗓️</span> Calendário de Atividade (365 dias)</div>
+          <div id="heatmap-months" style="display:flex;gap:12px;font-size:.65rem;color:var(--text3);margin-bottom:6px;padding-left:4px"></div>
+          <div id="heatmap" style="padding:4px 0"></div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:.7rem;color:var(--text3)">
+            <span>Menos</span>
+            <div style="width:12px;height:12px;border-radius:2px;background:var(--border)"></div>
+            <div style="width:12px;height:12px;border-radius:2px;background:#1e4263"></div>
+            <div style="width:12px;height:12px;border-radius:2px;background:#1a6090"></div>
+            <div style="width:12px;height:12px;border-radius:2px;background:var(--neon)"></div>
+            <div style="width:12px;height:12px;border-radius:2px;background:#fff"></div>
+            <span>Mais</span>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title mb12"><span class="ct-icon">📚</span> Leitura</div>
+            <div id="stats-reading" style="display:flex;flex-direction:column;gap:8px;font-size:.83rem"></div>
+          </div>
+          <div class="card">
+            <div class="card-title mb12"><span class="ct-icon">🏋️</span> Treino & Saúde</div>
+            <div id="stats-health" style="display:flex;flex-direction:column;gap:8px;font-size:.83rem"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== ACHIEVEMENTS ==================== -->
+      <div class="page" id="page-achievements">
+        <div class="section-title">🏆 Conquistas</div>
+        <div id="ach-progress" class="card mb16" style="font-size:.85rem"></div>
+        <div id="achievements-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px"></div>
+      </div>
+
+      <!-- ==================== SHOP ==================== -->
+      <div class="page" id="page-shop">
+        <div class="section-title">🛒 Loja de Recompensas</div>
+
+        <div id="shop-balance">
+          <div class="bal-icon">🪙</div>
+          <div><div class="bal-val" id="shop-coins">0</div><div class="bal-label">Moedas disponíveis</div></div>
+          <div style="flex:1"></div>
+          <div style="font-size:.8rem;color:var(--text3);text-align:right;max-width:200px">
+            Troque moedas por recompensas reais que você mesmo criou. Pratique a gratificação adiada.
+          </div>
+        </div>
+
+        <div class="mb16">
+          <button class="btn btn-secondary" onclick="openModal('modal-add-reward')">+ Criar Recompensa</button>
+        </div>
+
+        <div id="rewards-grid"></div>
+
+        <div class="card mt20">
+          <div class="card-title mb12"><span class="ct-icon">🧾</span> Histórico de Compras</div>
+          <div id="purchases-list" style="font-size:.82rem;color:var(--text2)"></div>
+        </div>
+      </div>
+
+      <!-- ==================== SCHEDULE ==================== -->
+      <div class="page" id="page-schedule">
+        <div class="section-title">📅 Agenda Inteligente</div>
+        <div id="schedule-grid">
+          <div>
+            <div class="card mb16">
+              <div class="card-title mb12"><span class="ct-icon">🔒</span> Horários Fixos</div>
+              <div class="form-row mb8">
+                <div class="form-group"><label class="form-label">Nome</label><input id="ev-name" placeholder="Ex: Faculdade"/></div>
+                <div class="form-group"><label class="form-label">Início</label><input id="ev-start" type="time" value="08:00"/></div>
+              </div>
+              <div class="form-row mb12">
+                <div class="form-group"><label class="form-label">Fim</label><input id="ev-end" type="time" value="12:00"/></div>
+                <div class="form-group"><label class="form-label">Cor</label>
+                  <select id="ev-color">
+                    <option value="neon">Azul (estudo)</option>
+                    <option value="gold">Dourado (trabalho)</option>
+                    <option value="red">Vermelho (urgente)</option>
+                    <option value="green">Verde (saúde)</option>
+                    <option value="purple">Roxo (pessoal)</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="addScheduleEvent()">Adicionar</button>
+              <div class="mt12" id="fixed-events-list"></div>
+            </div>
+            <div class="card">
+              <div class="card-title mb8"><span class="ct-icon">😴</span> Horário de Sono</div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Dormir às</label><input id="sleep-start" type="time" value="23:00"/></div>
+                <div class="form-group"><label class="form-label">Acordar às</label><input id="sleep-end" type="time" value="07:00"/></div>
+              </div>
+              <button class="btn btn-secondary btn-sm mt8" onclick="saveSleep()">Salvar Sono</button>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-title mb12"><span class="ct-icon">✨</span> Sugestões Inteligentes</div>
+              <div style="font-size:.8rem;color:var(--text3);margin-bottom:12px">Com base nos seus horários, o sistema sugere quando encaixar seus hábitos.</div>
+              <button class="btn btn-secondary btn-sm mb12" onclick="renderScheduleSuggestions()">🔄 Gerar Sugestões</button>
+              <div id="suggestions-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== SEMESTER ==================== -->
+      <div class="page" id="page-semester">
+        <div class="section-title">🎓 Modo Semestral</div>
+        <div id="semester-form">
+          <div class="grid-2 mb12">
+            <div class="form-group"><label class="form-label">Início do Semestre</label><input id="sem-start" type="date"/></div>
+            <div class="form-group"><label class="form-label">Fim do Semestre</label><input id="sem-end" type="date"/></div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveSemester()">Salvar Semestre</button>
+        </div>
+
+        <div class="card mb16">
+          <div class="card-title mb12"><span class="ct-icon">📝</span> Provas & Entregas</div>
+          <div class="form-row mb8">
+            <div class="form-group"><label class="form-label">Nome</label><input id="exam-name" placeholder="Ex: Prova de Cálculo I"/></div>
+            <div class="form-group"><label class="form-label">Data</label><input id="exam-date" type="date"/></div>
+          </div>
+          <div class="form-row mb8">
+            <div class="form-group"><label class="form-label">Tipo</label>
+              <select id="exam-type">
+                <option value="prova">Prova</option>
+                <option value="trabalho">Trabalho</option>
+                <option value="entrega">Entrega</option>
+                <option value="outro">Outro</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="addExam()">Adicionar</button>
+          <div id="exams-list" class="mt12"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title mb8"><span class="ct-icon">📊</span> Status do Semestre</div>
+          <div id="semester-status" style="font-size:.85rem;color:var(--text2)"></div>
+        </div>
+      </div>
+
+      <!-- ==================== ENCYCLOPEDIA ==================== -->
+      <div class="page" id="page-encyclopedia">
+        <div class="section-title">📚 Enciclopédia de Hábitos</div>
+        <div style="font-size:.83rem;color:var(--text3);margin-bottom:20px">Entenda a ciência por trás de cada hábito. O conhecimento é a motivação mais duradoura.</div>
+        <div id="enc-grid"></div>
+        <div id="enc-article-wrap"></div>
+      </div>
+
+      <!-- ==================== SETTINGS ==================== -->
+      <div class="page" id="page-settings">
+        <div class="section-title">⚙️ Configurações</div>
+
+        <div class="settings-group">
+          <h3>Perfil</h3>
+          <div class="setting-row">
+            <div><div class="setting-label">Nome do Personagem</div></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="settings-name" style="width:160px" placeholder="Seu nome"/>
+              <button class="btn btn-secondary btn-sm" onclick="saveName()">Salvar</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div><div class="setting-label">Título Atual</div><div class="setting-desc">Selecione o título exibido</div></div>
+            <select id="settings-title" style="width:200px" onchange="changeTitle(this.value)"></select>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>Sistema</h3>
+          <div class="setting-row">
+            <div><div class="setting-label">Efeitos Sonoros</div><div class="setting-desc">Sons ao completar tarefas</div></div>
+            <label class="toggle"><input type="checkbox" id="toggle-sound" onchange="saveSettings()"/><div class="toggle-slider"></div></label>
+          </div>
+          <div class="setting-row">
+            <div><div class="setting-label">Reduzir Animações</div><div class="setting-desc">Para dispositivos mais lentos</div></div>
+            <label class="toggle"><input type="checkbox" id="toggle-motion" onchange="saveSettings()"/><div class="toggle-slider"></div></label>
+          </div>
+        </div>
+
+        <div class="settings-group" style="border-color:rgba(255,77,109,.3)">
+          <h3 style="color:var(--red)">Zona de Perigo</h3>
+          <div class="setting-row">
+            <div><div class="setting-label">Resetar todos os dados</div><div class="setting-desc">Apaga tudo e começa do zero. Irreversível.</div></div>
+            <button class="btn btn-danger btn-sm" onclick="confirmReset()">Resetar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== BACKUP ==================== -->
+      <div class="page" id="page-backup">
+        <div class="section-title">💾 Backup & Dados</div>
+
+        <div class="card mb16">
+          <div class="card-title mb12"><span class="ct-icon">📤</span> Exportar Dados</div>
+          <p style="font-size:.83rem;color:var(--text2);margin-bottom:12px">Baixe um arquivo JSON com todos os seus dados. Guarde em local seguro.</p>
+          <button class="btn btn-primary" onclick="exportData()">⬇ Exportar JSON</button>
+        </div>
+
+        <div class="card mb16">
+          <div class="card-title mb12"><span class="ct-icon">📥</span> Importar Dados</div>
+          <p style="font-size:.83rem;color:var(--text2);margin-bottom:12px">Restaure um backup anterior. Substituirá os dados atuais.</p>
+          <input type="file" id="import-file" accept=".json" style="margin-bottom:10px"/>
+          <button class="btn btn-secondary" onclick="importData()">⬆ Importar JSON</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title mb12"><span class="ct-icon">ℹ️</span> Informações do Sistema</div>
+          <div id="backup-info" style="font-size:.82rem;color:var(--text2);display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+      </div>
+
+    </div><!-- /pages -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- Add Habit -->
+<div class="modal-overlay hidden" id="modal-add-habit">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">✨ Criar Hábito Personalizado</div>
+      <button class="modal-close" onclick="closeModal('modal-add-habit')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nome</label><input id="nh-name" placeholder="Ex: Praticar violão"/></div>
+        <div class="form-group"><label class="form-label">Ícone (emoji)</label><input id="nh-icon" placeholder="🎸" maxlength="4"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Descrição</label><textarea id="nh-desc" placeholder="Descreva o hábito..."></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Categoria</label>
+          <select id="nh-cat">
+            <option value="saude">❤️ Saúde</option><option value="estudo">🎓 Estudo</option>
+            <option value="leitura">📖 Leitura</option><option value="exercicio">🏋️ Exercício</option>
+            <option value="meditacao">🧘 Meditação</option><option value="sono">😴 Sono</option>
+            <option value="produtividade">✅ Produtividade</option><option value="criatividade">🎨 Criatividade</option>
+            <option value="lazer">🎮 Lazer</option><option value="outro">✨ Outro</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Dificuldade</label>
+          <select id="nh-diff">
+            <option value="facil">Fácil</option><option value="medio" selected>Médio</option>
+            <option value="dificil">Difícil</option><option value="extremo">Extremo</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">XP</label><input id="nh-xp" type="number" min="1" value="15"/></div>
+        <div class="form-group"><label class="form-label">Moedas</label><input id="nh-coins" type="number" min="0" value="8"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Duração (min)</label><input id="nh-dur" type="number" min="1" value="15"/></div>
+        <div class="form-group"><label class="form-label">Energia (−20 a +20)</label><input id="nh-energy" type="number" min="-20" max="20" value="0"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Atributo Principal</label>
+        <select id="nh-attr">
+          <option value="intelligence">🧠 Inteligência</option><option value="discipline">🛡️ Disciplina</option>
+          <option value="strength">💪 Força</option><option value="focus">🎯 Foco</option>
+          <option value="creativity">🎨 Criatividade</option><option value="health">❤️ Saúde</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-habit')">Cancelar</button>
+      <button class="btn btn-primary" onclick="createCustomHabit()">Criar Hábito</button>
+    </div>
+  </div>
+</div>
+
+<!-- Habit Detail -->
+<div class="modal-overlay hidden" id="modal-habit-detail">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="hd-title">Nome do Hábito</div>
+      <button class="modal-close" onclick="closeModal('modal-habit-detail')">✕</button>
+    </div>
+    <div id="hd-body" class="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-habit-detail')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Boss -->
+<div class="modal-overlay hidden" id="modal-add-boss">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👹 Criar Chefe</div>
+      <button class="modal-close" onclick="closeModal('modal-add-boss')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Nome do Chefe</label><input id="boss-name" placeholder="Ex: Cálculo I"/></div>
+      <div class="form-group"><label class="form-label">Descrição</label><textarea id="boss-desc" placeholder="Derrote estudando..."></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Rank</label>
+          <select id="boss-rank"><option value="F">F</option><option value="E">E</option><option value="D" selected>D</option><option value="C">C</option><option value="B">B</option><option value="A">A</option><option value="S">S</option><option value="Nacional">Nacional</option><option value="Monarca">Monarca</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">HP Total</label><input id="boss-hp" type="number" min="100" value="500"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Recompensa XP</label><input id="boss-xp" type="number" value="200"/></div>
+        <div class="form-group"><label class="form-label">Recompensa Moedas</label><input id="boss-coins" type="number" value="100"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Prazo (opcional)</label><input id="boss-deadline" type="date"/></div>
+      <div class="form-group"><label class="form-label">Categorias que causam dano</label>
+        <div id="boss-cat-checks" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-boss')">Cancelar</button>
+      <button class="btn btn-primary" onclick="createBoss()">Criar Chefe</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Goal -->
+<div class="modal-overlay hidden" id="modal-add-goal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🎯 Nova Meta</div>
+      <button class="modal-close" onclick="closeModal('modal-add-goal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Título da Meta</label><input id="goal-title" placeholder="Ex: Ler 12 livros este ano"/></div>
+      <div class="form-group"><label class="form-label">Descrição</label><textarea id="goal-desc" placeholder="Detalhes..."></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Prazo</label><label class="form-label">Período</label>
+          <select id="goal-term"><option value="curto">Curto prazo</option><option value="medio" selected>Médio prazo</option><option value="longo">Longo prazo</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Prioridade</label>
+          <select id="goal-priority"><option value="baixa">Baixa</option><option value="media" selected>Média</option><option value="alta">Alta</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Prazo</label><input id="goal-deadline" type="date"/></div>
+        <div class="form-group"><label class="form-label">Categoria</label>
+          <select id="goal-cat"><option value="leitura">📖 Leitura</option><option value="saude">❤️ Saúde</option><option value="estudo">🎓 Estudo</option><option value="exercicio">🏋️ Exercício</option><option value="projeto">🛠️ Projeto</option><option value="outro">✨ Outro</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Recompensa XP</label><input id="goal-xp" type="number" value="80"/></div>
+        <div class="form-group"><label class="form-label">Recompensa Moedas</label><input id="goal-coins" type="number" value="40"/></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-goal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="createGoal()">Criar Meta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Reward -->
+<div class="modal-overlay hidden" id="modal-add-reward">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🎁 Criar Recompensa</div>
+      <button class="modal-close" onclick="closeModal('modal-add-reward')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Nome</label><input id="rw-name" placeholder="Ex: Açaí do final de semana"/></div>
+      <div class="form-group"><label class="form-label">Descrição</label><textarea id="rw-desc" placeholder="Descreva sua recompensa..."></textarea></div>
+      <div class="form-group"><label class="form-label">Preço em Moedas 🪙</label><input id="rw-price" type="number" min="1" value="300"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-reward')">Cancelar</button>
+      <button class="btn btn-primary" onclick="createReward()">Criar Recompensa</button>
+    </div>
+  </div>
+</div>
+
+<!-- Log Pages Modal -->
+<div class="modal-overlay hidden" id="modal-log-pages">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <div class="modal-title">📖 Registrar Leitura</div>
+      <button class="modal-close" onclick="closeModal('modal-log-pages')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="log-book-title" style="font-size:.9rem;font-weight:700;color:var(--neon);margin-bottom:8px"></div>
+      <div class="form-group"><label class="form-label">Páginas lidas agora</label><input id="log-pages-input" type="number" min="1" placeholder="Ex: 25"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-log-pages')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmLogPages()">Registrar ✅</button>
+    </div>
+  </div>
+</div>
+
+</body>
+<script>
+/* ============================================================
+   PERSONAL ASCENSION — 03-ui.js
+   Rendering engine + event handlers
+   ============================================================ */
+(function () {
+  'use strict';
+  const PA = window.PA;
+  let STATE = null;
+  let _logPageBookId = null;
+
+  /* ===================================================
+     BOOT
+     =================================================== */
+  document.addEventListener('DOMContentLoaded', () => {
+    STATE = PA.Storage.load() || PA.newState();
+    PA.PlayerEngine.updateStreak(STATE);
+    PA.AchievementEngine.checkAll(STATE, []);
+    PA.Storage.save(STATE);
+
+    initParticles();
+    initNavigation();
+    initFilters();
+    populateBossCatChecks();
+    renderAll();
+    applySettings();
+  });
+
+  /* ===================================================
+     GLOBAL RENDER
+     =================================================== */
+  function renderAll() {
+    renderSidebar();
+    renderTopbar();
+    renderDashboard();
+    renderCharacter();
+    renderHabits();
+    renderReading();
+    renderQuests();
+    renderBosses();
+    renderGoals();
+    renderStatistics();
+    renderAchievements();
+    renderShop();
+    renderSchedule();
+    renderSemester();
+    renderEncyclopedia();
+    renderSettingsPage();
+    renderBackupInfo();
+    PA.Storage.save(STATE);
+  }
+
+  /* ===================================================
+     SIDEBAR & TOPBAR
+     =================================================== */
+  function renderSidebar() {
+    const p = STATE.player;
+    document.getElementById('sb-name').textContent = p.name;
+    document.getElementById('sb-level').textContent = `Nível ${p.level} · ${PA.rankForLevel(p.level)}`;
+    const pct = Math.round((p.xp / PA.xpForLevel(p.level)) * 100);
+    document.getElementById('sb-xpfill').style.width = pct + '%';
+  }
+
+  function renderTopbar() {
+    const p = STATE.player;
+    document.getElementById('tb-energy').textContent = Math.round(p.mentalEnergy);
+    document.getElementById('tb-coins').textContent = p.coins;
+    document.getElementById('tb-streak').textContent = p.streak.current;
+  }
+
+  /* ===================================================
+     DASHBOARD
+     =================================================== */
+  function renderDashboard() {
+    const p = STATE.player;
+    const hour = new Date().getHours();
+    const greet = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+    document.getElementById('dash-greeting').innerHTML = `${greet}, <span id="dash-name" style="color:var(--neon)">${p.name}</span>! ⚔️`;
+    const motIdx = Math.floor(Date.now() / 86400000) % PA.MOTIVATIONAL.length;
+    document.getElementById('dash-motivational').textContent = `"${PA.MOTIVATIONAL[motIdx]}"`;
+
+    document.getElementById('dash-level').textContent = p.level;
+    document.getElementById('dash-streak').textContent = p.streak.current;
+    document.getElementById('dash-coins').textContent = p.coins;
+    document.getElementById('dash-energy').textContent = Math.round(p.mentalEnergy);
+    document.getElementById('dash-pages').textContent = p.stats.pagesRead;
+    document.getElementById('dash-tasks').textContent = p.stats.tasksCompleted;
+
+    const xpNext = PA.xpForLevel(p.level);
+    const xpPct = Math.round((p.xp / xpNext) * 100);
+    document.getElementById('dash-xp-cur').textContent = p.xp;
+    document.getElementById('dash-xp-next').textContent = xpNext;
+    document.getElementById('dash-xp-bar').style.width = xpPct + '%';
+    document.getElementById('dash-rank-label').textContent = PA.rankForLevel(p.level);
+
+    const titleObj = PA.TITLES.find(t => t.id === p.currentTitle);
+    document.getElementById('dash-title-label').textContent = `Título: ${titleObj ? titleObj.name : '—'}`;
+    document.getElementById('dash-prestige').textContent = p.prestige;
+
+    // Energy bar
+    const eBar = document.getElementById('dash-energy-bar');
+    eBar.style.width = p.mentalEnergy + '%';
+    eBar.dataset.level = p.mentalEnergy >= 70 ? 'high' : p.mentalEnergy >= 35 ? 'mid' : 'low';
+    document.getElementById('dash-energy-val').textContent = `${Math.round(p.mentalEnergy)}/100`;
+
+    const bMsg = PA.PlayerEngine.burnoutMessage(STATE);
+    const bEl = document.getElementById('dash-burnout-msg');
+    bEl.textContent = bMsg || '';
+    bEl.style.display = bMsg ? 'block' : 'none';
+
+    // Habit progress
+    const [done, total] = PA.HabitEngine.progressToday(STATE);
+    const hPct = total ? Math.round((done / total) * 100) : 0;
+    document.getElementById('dash-habit-count').textContent = `${done} / ${total}`;
+    document.getElementById('dash-habit-bar').style.width = hPct + '%';
+    document.getElementById('dash-habit-prog-label').textContent = `${done}/${total} concluídos`;
+
+    // Quick habits list (show first 5)
+    const listEl = document.getElementById('dash-habits-list');
+    const activeHabits = STATE.habits.filter(h => h.active).slice(0, 5);
+    listEl.innerHTML = activeHabits.map(h => habitItemHTML(h, true)).join('');
+
+    // Recommendations
+    const recs = PA.RecommendEngine.analyze(STATE);
+    const recList = document.getElementById('rec-list');
+    if (recs.length === 0) {
+      recList.innerHTML = '<div style="font-size:.83rem;color:var(--text3)">Sem recomendações no momento. Continue assim!</div>';
+    } else {
+      recList.innerHTML = recs.map(r => `<div class="rec-item"><span class="rec-icon">${r.icon}</span><span>${r.text}</span></div>`).join('');
+    }
+
+    // Active bosses preview
+    const activeBosses = STATE.bosses.filter(b => !b.defeatedAt);
+    const bossWrap = document.getElementById('dash-bosses-wrap');
+    if (activeBosses.length > 0) {
+      bossWrap.style.display = 'block';
+      document.getElementById('dash-bosses-list').innerHTML = activeBosses.slice(0, 2).map(b => bossCardHTML(b, true)).join('');
+    } else {
+      bossWrap.style.display = 'none';
+    }
+  }
+
+  /* ===================================================
+     CHARACTER
+     =================================================== */
+  function renderCharacter() {
+    const p = STATE.player;
+    document.getElementById('char-name').textContent = p.name;
+    document.getElementById('char-rank').textContent = PA.rankForLevel(p.level);
+    const titleObj = PA.TITLES.find(t => t.id === p.currentTitle);
+    document.getElementById('char-title-badge').textContent = titleObj ? titleObj.name : '—';
+    document.getElementById('char-xp-cur').textContent = p.xp;
+    const xpNext = PA.xpForLevel(p.level);
+    document.getElementById('char-xp-next').textContent = xpNext;
+    document.getElementById('char-xp-bar').style.width = Math.round((p.xp / xpNext) * 100) + '%';
+    document.getElementById('char-level-big').textContent = p.level;
+
+    // Attributes
+    const attrEl = document.getElementById('char-attributes');
+    attrEl.innerHTML = Object.entries(PA.ATTR).map(([key, cfg]) => {
+      const val = p.attributes[key] || 10;
+      const barPct = Math.min(100, Math.round((val / 200) * 100));
+      return `<div class="attr-row">
+        <div class="attr-icon">${cfg.icon}</div>
+        <div class="attr-label">${cfg.label}</div>
+        <div class="attr-bar"><div class="attr-fill" style="width:${barPct}%"></div></div>
+        <div class="attr-val">${val}</div>
+      </div>`;
+    }).join('');
+
+    // Stats
+    const st = p.stats;
+    const statsEl = document.getElementById('char-stats-list');
+    const rows = [
+      ['✅', 'Tarefas Concluídas', st.tasksCompleted],
+      ['📖', 'Páginas Lidas', st.pagesRead],
+      ['📚', 'Livros Concluídos', st.booksCompleted],
+      ['🎓', 'Horas Estudadas', st.hoursStudied.toFixed(1) + 'h'],
+      ['🏋️', 'Treinos Realizados', st.workoutCount],
+      ['🧘', 'Sessões de Meditação', st.meditationCount],
+      ['🔥', 'Sequência Atual', p.streak.current + ' dias'],
+      ['🏆', 'Maior Sequência', p.streak.longest + ' dias'],
+      ['🪙', 'Total de Moedas Ganhas', st.coinsEarned],
+      ['⭐', 'Total de XP Ganho', st.xpEarned],
+    ];
+    statsEl.innerHTML = rows.map(([icon, label, val]) =>
+      `<div class="flex justify-between items-center" style="padding:4px 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--text2)">${icon} ${label}</span>
+        <span class="text-neon fw700">${val}</span>
+       </div>`
+    ).join('');
+
+    // Energy
+    const ePct = p.mentalEnergy;
+    const eBar = document.getElementById('char-energy-bar');
+    eBar.style.width = ePct + '%';
+    eBar.dataset.level = ePct >= 70 ? 'high' : ePct >= 35 ? 'mid' : 'low';
+    document.getElementById('char-energy-label').textContent = `${Math.round(ePct)} / 100`;
+    const risk = PA.PlayerEngine.burnoutRisk(STATE);
+    const riskEl = document.getElementById('char-energy-risk');
+    const riskCfg = { baixo: ['badge-green','Risco Baixo'], moderado: ['badge-gold','Risco Moderado'], alto: ['badge-red','Risco Alto'], critico: ['badge-red','⚠️ Crítico'] };
+    riskEl.className = 'badge ' + (riskCfg[risk]?.[0] || 'badge-gray');
+    riskEl.textContent = riskCfg[risk]?.[1] || risk;
+
+    // Titles
+    const titlesEl = document.getElementById('char-titles-grid');
+    titlesEl.innerHTML = PA.TITLES.map(t => {
+      const unlocked = p.unlockedTitles.includes(t.id);
+      const active = p.currentTitle === t.id;
+      return `<div class="title-item ${active ? 'active-title' : ''} ${!unlocked ? 'locked-title' : ''}" onclick="${unlocked ? `selectTitle('${t.id}')` : ''}">
+        ${active ? '👑 ' : ''}<span class="title-name">${t.name}</span>
+        <div class="title-desc">${unlocked ? t.desc : '🔒 Bloqueado'}</div>
+      </div>`;
+    }).join('');
+
+    // Prestige
+    document.getElementById('char-prestige-count').textContent = p.prestige;
+    document.getElementById('char-prestige-bonus').textContent = p.prestigeBonus + '%';
+    const canP = PA.PrestigeEngine.canPrestige(STATE);
+    document.getElementById('char-prestige-req').textContent = canP
+      ? '✅ Você pode ascender! Confirme abaixo.'
+      : `Ascensão disponível no nível 30. (Nível atual: ${p.level})`;
+    document.getElementById('btn-prestige').disabled = !canP;
+    document.getElementById('btn-prestige').className = canP ? 'btn btn-primary' : 'btn btn-secondary';
+  }
+
+  /* ===================================================
+     HABITS
+     =================================================== */
+  function renderHabits(filterCat) {
+    const [done, total] = PA.HabitEngine.progressToday(STATE);
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    document.getElementById('habits-prog-label').textContent = `${done} / ${total}`;
+    document.getElementById('habits-prog-bar').style.width = pct + '%';
+
+    const cat = filterCat || document.querySelector('.filter-btn.active')?.dataset.cat || 'all';
+    const list = document.getElementById('habits-list-wrap');
+    const habits = STATE.habits.filter(h => cat === 'all' ? true : h.category === cat);
+    list.innerHTML = habits.map(h => habitItemHTML(h, false)).join('');
+  }
+
+  function habitItemHTML(h, compact) {
+    const done = PA.HabitEngine.isDoneToday(STATE, h.id);
+    const diff = PA.DIFFICULTY[h.difficulty];
+    const diffColor = diff?.color || 'var(--text3)';
+    return `<div class="habit-item ${done ? 'done' : ''}" onclick="toggleHabit('${h.id}')">
+      <div class="hi-check">${done ? '✓' : ''}</div>
+      <div class="hi-icon">${h.icon || '✨'}</div>
+      <div class="hi-info">
+        <div class="hi-name">${h.name}</div>
+        <div class="hi-meta">
+          <span class="hi-xp">+${h.xp} XP</span>
+          <span class="hi-coins">+${h.coins} 🪙</span>
+          <span class="hi-dur">${h.duration}min</span>
+          <span class="hi-diff" style="color:${diffColor}">${diff?.label || ''}</span>
+        </div>
+      </div>
+      ${!compact ? `<button class="habit-info-btn" onclick="event.stopPropagation();showHabitDetail('${h.id}')">ℹ️</button>` : ''}
+      ${h.custom ? `<button class="btn btn-danger btn-icon btn-sm" onclick="event.stopPropagation();removeHabit('${h.id}')">🗑</button>` : ''}
+    </div>`;
+  }
+
+  window.toggleHabit = function (id) {
+    const done = PA.HabitEngine.isDoneToday(STATE, id);
+    let events = [];
+    if (done) {
+      PA.HabitEngine.undo(STATE, id);
+    } else {
+      events = PA.HabitEngine.complete(STATE, id, null);
+    }
+    PA.Storage.save(STATE);
+    processEvents(events);
+    renderAll();
+  };
+
+  window.removeHabit = function (id) {
+    if (confirm('Remover este hábito?')) {
+      PA.HabitEngine.removeCustom(STATE, id);
+      PA.Storage.save(STATE);
+      renderAll();
+    }
+  };
+
+  window.showHabitDetail = function (id) {
+    const h = STATE.habits.find(h => h.id === id);
+    if (!h) return;
+    document.getElementById('hd-title').textContent = `${h.icon || ''} ${h.name}`;
+    const body = document.getElementById('hd-body');
+    body.innerHTML = `
+      <div style="font-size:.85rem;color:var(--text2);margin-bottom:12px">${h.description || ''}</div>
+      ${h.benefits?.length ? `<div class="enc-section"><h3>✅ Benefícios</h3><ul>${h.benefits.map(b => `<li>${b}</li>`).join('')}</ul></div>` : ''}
+      ${h.why ? `<div class="enc-section"><h3>🧠 Por que fazer?</h3><p>${h.why}</p></div>` : ''}
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+        <span class="badge badge-blue">+${h.xp} XP</span>
+        <span class="badge badge-gold">+${h.coins} Moedas</span>
+        <span class="badge badge-gray">${h.duration} min</span>
+        <span class="badge badge-purple">${PA.DIFFICULTY[h.difficulty]?.label || ''}</span>
+        <span class="badge badge-green">${PA.CATEGORY[h.category]?.label || h.category}</span>
+      </div>
+    `;
+    openModal('modal-habit-detail');
+  };
+
+  window.createCustomHabit = function () {
+    const fields = {
+      name: document.getElementById('nh-name').value.trim(),
+      icon: document.getElementById('nh-icon').value.trim() || '✨',
+      description: document.getElementById('nh-desc').value.trim(),
+      category: document.getElementById('nh-cat').value,
+      difficulty: document.getElementById('nh-diff').value,
+      xp: document.getElementById('nh-xp').value,
+      coins: document.getElementById('nh-coins').value,
+      duration: document.getElementById('nh-dur').value,
+      energy: document.getElementById('nh-energy').value,
+      attribute: document.getElementById('nh-attr').value,
+    };
+    if (!fields.name) { showToast('⚠️', 'Digite um nome para o hábito.', ''); return; }
+    PA.HabitEngine.createCustom(STATE, fields);
+    PA.Storage.save(STATE);
+    closeModal('modal-add-habit');
+    renderAll();
+    showToast('✨', `Hábito "${fields.name}" criado!`, 'habit');
+  };
+
+  /* ===================================================
+     READING
+     =================================================== */
+  function renderReading() {
+    const s = STATE.player.stats;
+    document.getElementById('rs-books').textContent = s.booksCompleted;
+    document.getElementById('rs-pages').textContent = s.pagesRead;
+    document.getElementById('rs-yearly-books').textContent = PA.StatEngine.estimatedYearlyBooks(STATE);
+    document.getElementById('rs-hours').textContent = PA.StatEngine.totalReadingHours(STATE).toFixed(1) + 'h';
+
+    const grid = document.getElementById('books-grid');
+    if (STATE.books.length === 0) {
+      grid.innerHTML = '<div style="color:var(--text3);font-size:.85rem">Nenhum livro adicionado ainda. Adicione seu primeiro livro!</div>';
+      return;
+    }
+    grid.innerHTML = STATE.books.map(b => bookCardHTML(b)).join('');
+  }
+
+  function bookCardHTML(b) {
+    const pct = b.totalPages ? Math.round((b.pagesRead / b.totalPages) * 100) : 0;
+    const daily = PA.ReadingEngine.calcDailyGoal(b);
+    const eta = PA.ReadingEngine.completionDate(b);
+    const remaining = b.totalPages - b.pagesRead;
+    const estMins = b.readingSpeedPpm > 0 ? Math.round(remaining / b.readingSpeedPpm) : null;
+    return `<div class="book-card ${b.completedAt ? 'book-completed' : ''}">
+      <div class="book-title">${b.title}</div>
+      <div class="book-author">por ${b.author || '—'}</div>
+      <div class="book-progress-label"><span>${b.pagesRead} / ${b.totalPages} páginas</span><span>${pct}%</span></div>
+      <div class="prog-wrap" style="height:8px"><div class="prog-fill prog-xp" style="width:${pct}%"></div></div>
+      <div class="book-meta">
+        ${daily ? `<span class="badge badge-blue">Meta: ${daily} pág/dia</span>` : ''}
+        ${eta && !b.completedAt ? `<span class="badge badge-purple">Conclusão: ${PA.date.formatBR(eta)}</span>` : ''}
+        ${estMins ? `<span class="badge badge-gray">~${Math.round(estMins/60*10)/10}h restantes</span>` : ''}
+        ${b.completedAt ? `<span class="badge badge-green">✓ Concluído ${PA.date.formatBR(b.completedAt)}</span>` : ''}
+      </div>
+      ${!b.completedAt ? `<div class="book-actions">
+        <button class="btn btn-primary btn-sm" onclick="openLogPages('${b.id}')">📖 Registrar Leitura</button>
+        <button class="btn btn-danger btn-sm" onclick="removeBook('${b.id}')">🗑</button>
+      </div>` : ''}
+    </div>`;
+  }
+
+  window.addBook = function () {
+    const speedPages = Number(document.getElementById('book-speed').value);
+    const daysGoal = Number(document.getElementById('book-days').value);
+    const totalPages = Number(document.getElementById('book-pages').value) || 100;
+    const ppm = PA.ReadingEngine.calcPagesPerMin(speedPages || 5);
+    const dailyGoal = daysGoal > 0 ? Math.ceil((totalPages - (Number(document.getElementById('book-read').value) || 0)) / daysGoal) : 20;
+
+    const book = PA.ReadingEngine.addBook(STATE, {
+      title: document.getElementById('book-title').value.trim() || 'Novo Livro',
+      author: document.getElementById('book-author').value.trim(),
+      totalPages,
+      pagesRead: Number(document.getElementById('book-read').value) || 0,
+      readingSpeedPpm: ppm,
+      dailyGoalPages: dailyGoal,
+      deadline: daysGoal > 0 ? PA.date.addDays(PA.date.todayStr(), daysGoal) : null,
+    });
+    PA.Storage.save(STATE);
+    showToast('📚', `"${book.title}" adicionado!`, 'xp');
+    // Clear form
+    ['book-title','book-author','book-speed','book-days'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('book-pages').value = '';
+    document.getElementById('book-read').value = '0';
+    renderAll();
+  };
+
+  window.openLogPages = function (bookId) {
+    _logPageBookId = bookId;
+    const book = STATE.books.find(b => b.id === bookId);
+    document.getElementById('log-book-title').textContent = book ? book.title : '';
+    document.getElementById('log-pages-input').value = '';
+    openModal('modal-log-pages');
+  };
+
+  window.confirmLogPages = function () {
+    const pages = Number(document.getElementById('log-pages-input').value);
+    if (!pages || pages <= 0) { showToast('⚠️', 'Informe o número de páginas.', ''); return; }
+    const events = PA.ReadingEngine.logPages(STATE, _logPageBookId, pages);
+    PA.Storage.save(STATE);
+    closeModal('modal-log-pages');
+    processEvents(events);
+    renderAll();
+    showToast('📖', `+${pages} páginas registradas!`, 'xp');
+  };
+
+  window.removeBook = function (id) {
+    if (confirm('Remover este livro?')) {
+      const idx = STATE.books.findIndex(b => b.id === id);
+      if (idx !== -1) STATE.books.splice(idx, 1);
+      PA.Storage.save(STATE);
+      renderAll();
+    }
+  };
+
+  /* ===================================================
+     QUESTS
+     =================================================== */
+  function renderQuests() {
+    const wp = PA.QuestEngine.weekProgress(STATE);
+    const listEl = document.getElementById('quests-list');
+    listEl.innerHTML = PA.WEEKLY_QUEST_TEMPLATES.map(q => {
+      const current = wp[q.metric] || 0;
+      const claimed = PA.QuestEngine.isClaimed(STATE, q.id);
+      const done = current >= q.target;
+      const pct = Math.min(100, Math.round((current / q.target) * 100));
+      return `<div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:.95rem;font-weight:700">${q.icon} ${q.name}</div>
+          ${claimed ? '<span class="badge badge-green">✓ Resgatada</span>' : done ? '<span class="badge badge-gold">Pronta!</span>' : ''}
+        </div>
+        <div style="font-size:.82rem;color:var(--text2);margin-bottom:10px">${q.desc}</div>
+        <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text3);margin-bottom:4px">
+          <span>Progresso: ${current} / ${q.target}</span><span>${pct}%</span>
+        </div>
+        <div class="prog-wrap" style="height:8px"><div class="prog-fill prog-xp" style="width:${pct}%"></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+          <div style="font-size:.75rem;color:var(--text3)">+${q.xp} XP · +${q.coins} 🪙</div>
+          ${!claimed && done ? `<button class="btn btn-gold btn-sm" onclick="claimQuest('${q.id}')">Resgatar 🎁</button>` : ''}
+          ${!done ? `<span style="font-size:.75rem;color:var(--text3)">Faltam ${q.target - current}</span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+
+    // Daily quests
+    const [done, total] = PA.HabitEngine.progressToday(STATE);
+    const dailyEl = document.getElementById('daily-quests-list');
+    const daily = [
+      { name: 'Complete ao menos 1 hábito', done: done >= 1, xp: 5 },
+      { name: 'Complete metade dos seus hábitos', done: total > 0 && done >= Math.ceil(total / 2), xp: 15 },
+      { name: 'Complete todos os hábitos do dia', done: total > 0 && done >= total, xp: 30, coins: 15 },
+    ];
+    dailyEl.innerHTML = daily.map(q =>
+      `<div class="flex items-center gap8" style="padding:8px;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius2)">
+        <span style="font-size:1rem">${q.done ? '✅' : '⬜'}</span>
+        <span style="font-size:.83rem;flex:1;${q.done ? 'text-decoration:line-through;color:var(--text3)' : ''}">${q.name}</span>
+        <span class="badge badge-blue">+${q.xp} XP${q.coins ? ` +${q.coins}🪙` : ''}</span>
+      </div>`
+    ).join('');
+  }
+
+  window.claimQuest = function (questId) {
+    const events = [];
+    const ok = PA.QuestEngine.claimQuest(STATE, questId, events);
+    if (ok) { PA.Storage.save(STATE); processEvents(events); renderAll(); }
+  };
+
+  /* ===================================================
+     BOSSES
+     =================================================== */
+  function renderBosses() {
+    const el = document.getElementById('bosses-grid');
+    if (STATE.bosses.length === 0) {
+      el.innerHTML = '<div style="color:var(--text3);font-size:.85rem">Nenhum chefe criado ainda. Crie um grande desafio e derrote-o hábito por hábito!</div>';
+      return;
+    }
+    el.innerHTML = STATE.bosses.map(b => bossCardHTML(b, false)).join('');
+  }
+
+  function bossCardHTML(b, compact) {
+    const pct = PA.BossEngine.progress(b);
+    const rankColor = { S: '#f5b942', A: '#c850e0', B: '#8b5cf6', C: '#4cc9f0', D: '#22c55e', E: '#94a3b8', F: '#64748b', Nacional: '#ff4d6d', Monarca: '#fff' };
+    const rc = rankColor[b.rank] || 'var(--neon)';
+    return `<div class="boss-card ${b.defeatedAt ? 'opacity:0.5' : ''}">
+      <div class="boss-rank" style="color:${rc}">RANK ${b.rank}</div>
+      <div class="boss-name">${b.name}</div>
+      ${b.description ? `<div style="font-size:.78rem;color:var(--text2);margin-bottom:10px">${b.description}</div>` : ''}
+      ${b.defeatedAt ? `<div class="badge badge-green" style="margin-bottom:8px">✓ Derrotado em ${PA.date.formatBR(b.defeatedAt)}</div>` : ''}
+      ${!b.defeatedAt ? `
+        <div class="boss-hp-label">HP: ${b.currentHp} / ${b.hp}</div>
+        <div class="boss-hp-bar"><div class="boss-hp-fill" style="width:${100 - pct}%"></div></div>
+        <div style="text-align:right;font-size:.72rem;color:var(--text3);margin-top:4px">${pct}% de progresso</div>
+      ` : ''}
+      <div class="boss-footer">
+        <div class="boss-reward">⭐ +${b.xpReward} XP · 🪙 +${b.coinReward}</div>
+        ${b.deadline ? `<span class="badge badge-red">⏳ ${PA.date.formatBR(b.deadline)}</span>` : ''}
+        ${!compact ? `<button class="btn btn-danger btn-sm" onclick="removeBoss('${b.id}')">🗑</button>` : ''}
+      </div>
+    </div>`;
+  }
+
+  window.createBoss = function () {
+    const cats = [...document.querySelectorAll('#boss-cat-checks input:checked')].map(c => c.value);
+    const fields = {
+      name: document.getElementById('boss-name').value.trim() || 'Novo Chefe',
+      description: document.getElementById('boss-desc').value.trim(),
+      rank: document.getElementById('boss-rank').value,
+      hp: document.getElementById('boss-hp').value,
+      xpReward: document.getElementById('boss-xp').value,
+      coinReward: document.getElementById('boss-coins').value,
+      deadline: document.getElementById('boss-deadline').value || null,
+      linkedCategories: cats,
+    };
+    PA.BossEngine.addBoss(STATE, fields);
+    PA.Storage.save(STATE);
+    closeModal('modal-add-boss');
+    renderAll();
+    showToast('👹', `Chefe "${fields.name}" criado!`, 'boss');
+  };
+
+  window.removeBoss = function (id) {
+    if (confirm('Remover este chefe?')) {
+      const idx = STATE.bosses.findIndex(b => b.id === id);
+      if (idx !== -1) STATE.bosses.splice(idx, 1);
+      PA.Storage.save(STATE);
+      renderAll();
+    }
+  };
+
+  function populateBossCatChecks() {
+    const el = document.getElementById('boss-cat-checks');
+    if (!el) return;
+    el.innerHTML = Object.entries(PA.CATEGORY).map(([k, v]) =>
+      `<label style="display:flex;align-items:center;gap:4px;font-size:.8rem;cursor:pointer">
+        <input type="checkbox" value="${k}"/> ${v.icon} ${v.label}
+      </label>`
+    ).join('');
+  }
+
+  /* ===================================================
+     GOALS
+     =================================================== */
+  function renderGoals() {
+    const el = document.getElementById('goals-list');
+    if (STATE.goals.length === 0) {
+      el.innerHTML = '<div style="color:var(--text3);font-size:.85rem">Nenhuma meta criada ainda. Defina um objetivo e avance em direção a ele.</div>';
+      return;
+    }
+    el.innerHTML = STATE.goals.map(g => goalItemHTML(g)).join('');
+  }
+
+  function goalItemHTML(g) {
+    const term = PA.GOAL_TERMS[g.term] || g.term;
+    const pri = PA.PRIORITIES[g.priority];
+    const cat = PA.CATEGORY[g.category];
+    const pct = g.progress || 0;
+    const daysLeft = g.deadline ? PA.date.daysBetween(PA.date.todayStr(), g.deadline) : null;
+    return `<div class="goal-item ${g.completedAt ? 'completed' : ''}">
+      <div class="goal-title-row">
+        <div class="goal-title">${cat?.icon || '🎯'} ${g.title}</div>
+        ${g.completedAt ? '<span class="badge badge-green">✓ Concluída</span>' : `<span class="badge" style="background:${pri?.color}22;color:${pri?.color};border:1px solid ${pri?.color}44">${pri?.label || ''}</span>`}
+      </div>
+      <div class="goal-meta">
+        <span>${term}</span>
+        ${g.deadline ? `<span>⏳ ${PA.date.formatBR(g.deadline)}${daysLeft !== null ? ` (${daysLeft > 0 ? daysLeft + ' dias' : 'venceu'})` : ''}</span>` : ''}
+        <span>+${g.xpReward} XP · +${g.coinReward} 🪙</span>
+      </div>
+      ${g.description ? `<div style="font-size:.8rem;color:var(--text3);margin-bottom:8px">${g.description}</div>` : ''}
+      <div class="goal-progress-row">
+        <div class="prog-wrap"><div class="prog-fill prog-xp" style="width:${pct}%"></div></div>
+        <span class="goal-pct">${pct}%</span>
+      </div>
+      ${!g.completedAt ? `<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <input type="range" min="0" max="100" value="${pct}" style="flex:1;min-width:80px" onchange="setGoalProgress('${g.id}',this.value)"/>
+        <button class="btn btn-primary btn-sm" onclick="completeGoal('${g.id}')">✅ Concluir</button>
+        <button class="btn btn-danger btn-sm" onclick="removeGoal('${g.id}')">🗑</button>
+      </div>` : ''}
+    </div>`;
+  }
+
+  window.createGoal = function () {
+    const fields = {
+      title: document.getElementById('goal-title').value.trim() || 'Nova Meta',
+      description: document.getElementById('goal-desc').value.trim(),
+      term: document.getElementById('goal-term').value,
+      priority: document.getElementById('goal-priority').value,
+      deadline: document.getElementById('goal-deadline').value || null,
+      category: document.getElementById('goal-cat').value,
+      xpReward: document.getElementById('goal-xp').value,
+      coinReward: document.getElementById('goal-coins').value,
+    };
+    PA.GoalEngine.add(STATE, fields);
+    PA.Storage.save(STATE);
+    closeModal('modal-add-goal');
+    renderAll();
+  };
+
+  window.completeGoal = function (id) {
+    const events = [];
+    PA.GoalEngine.complete(STATE, id, events);
+    PA.Storage.save(STATE);
+    processEvents(events);
+    renderAll();
+    showToast('🎯', 'Meta concluída!', 'achievement');
+  };
+
+  window.setGoalProgress = function (id, val) {
+    PA.GoalEngine.setProgress(STATE, id, Number(val));
+    PA.Storage.save(STATE);
+    renderGoals();
+  };
+
+  window.removeGoal = function (id) {
+    if (confirm('Remover esta meta?')) {
+      const idx = STATE.goals.findIndex(g => g.id === id);
+      if (idx !== -1) STATE.goals.splice(idx, 1);
+      PA.Storage.save(STATE);
+      renderAll();
+    }
+  };
+
+  /* ===================================================
+     STATISTICS
+     =================================================== */
+  function renderStatistics() {
+    const p = STATE.player;
+    const st = p.stats;
+    const statsGrid = document.getElementById('stats-overview-grid');
+    const metrics = [
+      ['📅', 'Dias Ativos', st.daysActive],
+      ['🔥', 'Sequência Atual', p.streak.current + ' dias'],
+      ['🏆', 'Maior Sequência', p.streak.longest + ' dias'],
+      ['✅', 'Tarefas Totais', st.tasksCompleted],
+      ['📚', 'Livros Lidos', st.booksCompleted],
+      ['🎓', 'Horas Estudadas', st.hoursStudied.toFixed(1) + 'h'],
+      ['🏋️', 'Horas Treinadas', st.hoursExercised.toFixed(1) + 'h'],
+      ['🧘', 'Horas Meditadas', st.hoursMeditated.toFixed(1) + 'h'],
+      ['⭐', 'XP Total', st.xpEarned],
+      ['🪙', 'Moedas Ganhas', st.coinsEarned],
+      ['⚔️', 'Chefes Derrotados', st.bossesDefeated || 0],
+      ['🎯', 'Metas Concluídas', st.goalsCompleted || 0],
+    ];
+    statsGrid.innerHTML = metrics.map(([icon, label, val]) =>
+      `<div class="stat-block"><div class="sb-val">${icon}</div><div class="sb-val" style="font-size:1.1rem">${val}</div><div class="sb-label">${label}</div></div>`
+    ).join('');
+
+    // Weekly bar chart
+    const weekly = PA.StatEngine.weeklyCompletion(STATE);
+    const maxDone = Math.max(...weekly.map(d => d.done), 1);
+    const barChart = document.getElementById('bar-chart');
+    barChart.innerHTML = weekly.map(d => {
+      const h = Math.round((d.done / maxDone) * 120);
+      return `<div class="bar-col">
+        <div class="bar-val">${d.done}</div>
+        <div class="bar-fill" style="height:${h}px"></div>
+        <div class="bar-label">${d.day}</div>
+      </div>`;
+    }).join('');
+
+    // Heatmap
+    renderHeatmap();
+
+    // Reading stats
+    const rsEl = document.getElementById('stats-reading');
+    const yearlyBooks = PA.StatEngine.estimatedYearlyBooks(STATE);
+    const readHours = PA.StatEngine.totalReadingHours(STATE);
+    rsEl.innerHTML = [
+      ['📚', 'Livros concluídos', st.booksCompleted],
+      ['📄', 'Páginas lidas', st.pagesRead],
+      ['⏱️', 'Tempo total de leitura', readHours.toFixed(1) + 'h'],
+      ['📅', 'Livros/ano (estimativa)', yearlyBooks],
+    ].map(([i, l, v]) =>
+      `<div class="flex justify-between items-center" style="padding:4px 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--text2)">${i} ${l}</span><span class="text-neon fw700">${v}</span>
+      </div>`
+    ).join('');
+
+    // Health stats
+    const hsEl = document.getElementById('stats-health');
+    hsEl.innerHTML = [
+      ['🏋️', 'Treinos realizados', st.workoutCount],
+      ['⏱️', 'Horas treinadas', st.hoursExercised.toFixed(1) + 'h'],
+      ['🧘', 'Sessões de meditação', st.meditationCount],
+      ['⏱️', 'Horas meditadas', st.hoursMeditated.toFixed(1) + 'h'],
+    ].map(([i, l, v]) =>
+      `<div class="flex justify-between items-center" style="padding:4px 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--text2)">${i} ${l}</span><span class="text-neon fw700">${v}</span>
+      </div>`
+    ).join('');
+  }
+
+  function renderHeatmap() {
+    const data = PA.StatEngine.heatmapData(STATE);
+    const hm = document.getElementById('heatmap');
+    hm.innerHTML = '';
+    // group into weeks
+    const weeks = [];
+    let currentWeek = [];
+    data.forEach((d, i) => {
+      const dow = PA.date.parse(d.date).getDay();
+      if (i === 0) {
+        for (let j = 0; j < dow; j++) currentWeek.push(null); // pad
+      }
+      currentWeek.push(d);
+      if (currentWeek.length === 7) { weeks.push(currentWeek); currentWeek = []; }
+    });
+    if (currentWeek.length) weeks.push(currentWeek);
+
+    weeks.forEach(week => {
+      const col = document.createElement('div');
+      col.className = 'hm-week';
+      week.forEach(d => {
+        const cell = document.createElement('div');
+        cell.className = 'hm-day';
+        if (d) {
+          const s = d.score >= 80 ? 4 : d.score >= 50 ? 3 : d.score >= 20 ? 2 : d.score > 0 ? 1 : 0;
+          if (s) cell.dataset.s = s;
+          cell.title = `${PA.date.formatBR(d.date)}: ${d.score} pts`;
+        }
+        col.appendChild(cell);
+      });
+      hm.appendChild(col);
+    });
+  }
+
+  /* ===================================================
+     ACHIEVEMENTS
+     =================================================== */
+  function renderAchievements() {
+    const unlocked = STATE.achievementsUnlocked;
+    const total = PA.ACHIEVEMENTS.length;
+    document.getElementById('ach-progress').innerHTML =
+      `<span class="text-neon fw700">${unlocked.length}</span> / ${total} conquistas desbloqueadas &nbsp;·&nbsp; <span class="text-gold">${Math.round(unlocked.length / total * 100)}%</span>`;
+
+    const grid = document.getElementById('achievements-grid');
+    grid.innerHTML = PA.ACHIEVEMENTS.map(a => {
+      const isUnlocked = unlocked.includes(a.id);
+      return `<div class="ach-item ${isUnlocked ? 'unlocked' : 'locked'}" title="${a.desc}">
+        <div class="ach-icon">${a.icon}</div>
+        <div class="ach-name">${a.name}</div>
+        <div class="ach-desc">${a.desc}</div>
+        ${isUnlocked ? `<div class="ach-reward">+${a.xp} XP · +${a.coins}🪙</div>` : '<div class="ach-reward" style="color:var(--text3)">🔒</div>'}
+      </div>`;
+    }).join('');
+  }
+
+  /* ===================================================
+     SHOP
+     =================================================== */
+  function renderShop() {
+    document.getElementById('shop-coins').textContent = STATE.player.coins;
+    const grid = document.getElementById('rewards-grid');
+    grid.innerHTML = STATE.rewards.map(r => {
+      const canAfford = STATE.player.coins >= r.price;
+      return `<div class="reward-card">
+        <div class="rc-name">🎁 ${r.name}</div>
+        <div class="rc-desc">${r.description}</div>
+        <div class="rc-footer">
+          <div class="rc-price">🪙 ${r.price}</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn ${canAfford ? 'btn-gold' : 'btn-secondary'} btn-sm" onclick="buyReward('${r.id}')" ${!canAfford ? 'disabled style="opacity:.5"' : ''}>Comprar</button>
+            <button class="btn btn-danger btn-icon btn-sm" onclick="removeReward('${r.id}')">🗑</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Purchases
+    const pList = document.getElementById('purchases-list');
+    if (STATE.purchases.length === 0) {
+      pList.innerHTML = '<span style="color:var(--text3)">Nenhuma compra realizada ainda.</span>';
+    } else {
+      pList.innerHTML = [...STATE.purchases].reverse().slice(0, 10).map(p =>
+        `<div class="flex justify-between items-center" style="padding:6px 0;border-bottom:1px solid var(--border)">
+          <span>🎁 ${p.name}</span><span class="text-gold">−${p.price} 🪙</span>
+        </div>`
+      ).join('');
+    }
+  }
+
+  window.buyReward = function (id) {
+    const r = STATE.rewards.find(r => r.id === id);
+    if (!r) return;
+    if (STATE.player.coins < r.price) { showToast('⚠️', 'Moedas insuficientes!', ''); return; }
+    if (!confirm(`Comprar "${r.name}" por ${r.price} moedas?`)) return;
+    const events = [];
+    const res = PA.ShopEngine.buy(STATE, id, events);
+    if (res.ok) {
+      PA.Storage.save(STATE);
+      processEvents(events);
+      renderAll();
+      showToast('🎁', `"${r.name}" comprada! Aproveite!`, 'achievement');
+    } else {
+      showToast('⚠️', res.msg, '');
+    }
+  };
+
+  window.createReward = function () {
+    const fields = {
+      name: document.getElementById('rw-name').value.trim() || 'Recompensa',
+      description: document.getElementById('rw-desc').value.trim(),
+      price: document.getElementById('rw-price').value,
+    };
+    PA.ShopEngine.addReward(STATE, fields);
+    PA.Storage.save(STATE);
+    closeModal('modal-add-reward');
+    renderAll();
+  };
+
+  window.removeReward = function (id) {
+    if (confirm('Remover esta recompensa?')) {
+      PA.ShopEngine.removeReward(STATE, id);
+      PA.Storage.save(STATE);
+      renderAll();
+    }
+  };
+
+  /* ===================================================
+     SCHEDULE
+     =================================================== */
+  function renderSchedule() {
+    const evList = document.getElementById('fixed-events-list');
+    const events = STATE.schedule.fixedEvents || [];
+    const colorMap = { neon:'var(--neon)', gold:'var(--gold)', red:'var(--red)', green:'var(--green)', purple:'var(--neon2)' };
+    if (events.length === 0) {
+      evList.innerHTML = '<div style="color:var(--text3);font-size:.82rem">Nenhum horário fixo adicionado.</div>';
+    } else {
+      evList.innerHTML = events.map((e, i) =>
+        `<div class="event-item">
+          <div class="event-time" style="color:${colorMap[e.color] || 'var(--neon)'}">${e.start} – ${e.end}</div>
+          <div class="event-name">${e.name}</div>
+          <button class="btn btn-danger btn-icon btn-sm" onclick="removeEvent(${i})">✕</button>
+        </div>`
+      ).join('');
+    }
+    document.getElementById('sleep-start').value = STATE.schedule.sleepStart || '23:00';
+    document.getElementById('sleep-end').value = STATE.schedule.sleepEnd || '07:00';
+  }
+
+  window.addScheduleEvent = function () {
+    const ev = {
+      name: document.getElementById('ev-name').value.trim() || 'Evento',
+      start: document.getElementById('ev-start').value,
+      end: document.getElementById('ev-end').value,
+      color: document.getElementById('ev-color').value,
+    };
+    if (!STATE.schedule.fixedEvents) STATE.schedule.fixedEvents = [];
+    STATE.schedule.fixedEvents.push(ev);
+    STATE.schedule.fixedEvents.sort((a, b) => a.start.localeCompare(b.start));
+    PA.Storage.save(STATE);
+    renderSchedule();
+  };
+
+  window.removeEvent = function (idx) {
+    STATE.schedule.fixedEvents.splice(idx, 1);
+    PA.Storage.save(STATE);
+    renderSchedule();
+  };
+
+  window.saveSleep = function () {
+    STATE.schedule.sleepStart = document.getElementById('sleep-start').value;
+    STATE.schedule.sleepEnd = document.getElementById('sleep-end').value;
+    PA.Storage.save(STATE);
+    showToast('😴', 'Horário de sono salvo!', '');
+    renderScheduleSuggestions();
+  };
+
+  window.renderScheduleSuggestions = function () {
+    const sugs = PA.ScheduleEngine.suggestSlots(STATE);
+    const el = document.getElementById('suggestions-list');
+    if (sugs.length === 0) {
+      el.innerHTML = '<div style="color:var(--text3);font-size:.82rem">Nenhum espaço encontrado. Verifique seus horários fixos.</div>';
+      return;
+    }
+    el.innerHTML = sugs.map(s =>
+      `<div class="sug-item">
+        <div class="sug-time">${s.start} – ${s.end}</div>
+        <div>${s.icon} ${s.name}</div>
+        <span class="badge badge-gray">${s.dur}min</span>
+      </div>`
+    ).join('');
+  };
+
+  /* ===================================================
+     SEMESTER
+     =================================================== */
+  function renderSemester() {
+    const sem = STATE.semester;
+    if (sem.startDate) document.getElementById('sem-start').value = sem.startDate;
+    if (sem.endDate) document.getElementById('sem-end').value = sem.endDate;
+
+    // Exams
+    const exList = document.getElementById('exams-list');
+    const exams = sem.exams || [];
+    if (exams.length === 0) {
+      exList.innerHTML = '<div style="color:var(--text3);font-size:.82rem">Nenhuma prova adicionada.</div>';
+    } else {
+      exList.innerHTML = [...exams].sort((a, b) => a.date.localeCompare(b.date)).map((e, i) => {
+        const daysLeft = PA.date.daysBetween(PA.date.todayStr(), e.date);
+        const urgent = daysLeft <= 7 && daysLeft >= 0;
+        return `<div class="exam-item">
+          <div class="exam-date" style="${urgent ? 'color:var(--red)' : ''}">${PA.date.formatBR(e.date)}</div>
+          <div class="exam-name">${e.type === 'prova' ? '📝' : e.type === 'trabalho' ? '📋' : '📌'} ${e.name}</div>
+          <span class="badge ${urgent ? 'badge-red' : 'badge-gray'}">${daysLeft >= 0 ? daysLeft + ' dias' : 'Passou'}</span>
+          <button class="btn btn-danger btn-icon btn-sm" onclick="removeExam(${i})">✕</button>
+        </div>`;
+      }).join('');
+    }
+
+    // Status
+    const statusEl = document.getElementById('semester-status');
+    if (sem.startDate && sem.endDate) {
+      const today = PA.date.todayStr();
+      const total = PA.date.daysBetween(sem.startDate, sem.endDate);
+      const elapsed = PA.date.daysBetween(sem.startDate, today);
+      const pct = Math.max(0, Math.min(100, Math.round((elapsed / total) * 100)));
+      statusEl.innerHTML = `
+        <div style="margin-bottom:8px">Semestre: ${PA.date.formatBR(sem.startDate)} → ${PA.date.formatBR(sem.endDate)}</div>
+        <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text3);margin-bottom:4px"><span>Progresso</span><span>${pct}%</span></div>
+        <div class="prog-wrap" style="height:8px"><div class="prog-fill prog-xp" style="width:${pct}%"></div></div>
+        <div style="margin-top:8px;font-size:.78rem;color:var(--text3)">Dias restantes: ${Math.max(0, total - elapsed)}</div>`;
+    } else {
+      statusEl.textContent = 'Defina as datas do semestre para ver o status.';
+    }
+  }
+
+  window.saveSemester = function () {
+    STATE.semester.startDate = document.getElementById('sem-start').value || null;
+    STATE.semester.endDate = document.getElementById('sem-end').value || null;
+    PA.Storage.save(STATE);
+    showToast('🎓', 'Semestre salvo!', '');
+    renderSemester();
+  };
+
+  window.addExam = function () {
+    const name = document.getElementById('exam-name').value.trim();
+    const date = document.getElementById('exam-date').value;
+    const type = document.getElementById('exam-type').value;
+    if (!name || !date) { showToast('⚠️', 'Informe nome e data.', ''); return; }
+    if (!STATE.semester.exams) STATE.semester.exams = [];
+    STATE.semester.exams.push({ name, date, type });
+    PA.Storage.save(STATE);
+    document.getElementById('exam-name').value = '';
+    document.getElementById('exam-date').value = '';
+    renderSemester();
+  };
+
+  window.removeExam = function (idx) {
+    STATE.semester.exams.splice(idx, 1);
+    PA.Storage.save(STATE);
+    renderSemester();
+  };
+
+  /* ===================================================
+     ENCYCLOPEDIA
+     =================================================== */
+  function renderEncyclopedia() {
+    const grid = document.getElementById('enc-grid');
+    grid.innerHTML = PA.ENCYCLOPEDIA.map(e =>
+      `<div class="enc-card" onclick="showEncArticle('${e.id}')">
+        <div class="enc-icon">${e.icon}</div>
+        <div class="enc-name">${e.title}</div>
+      </div>`
+    ).join('');
+  }
+
+  window.showEncArticle = function (id) {
+    const art = PA.ENCYCLOPEDIA.find(e => e.id === id);
+    if (!art) return;
+    const wrap = document.getElementById('enc-article-wrap');
+    wrap.innerHTML = `<div class="card enc-article active">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <span style="font-size:2rem">${art.icon}</span>
+        <div>
+          <div style="font-size:1.2rem;font-weight:800">${art.title}</div>
+          <button class="btn btn-secondary btn-sm mt4" onclick="document.getElementById('enc-article-wrap').innerHTML=''">← Voltar</button>
+        </div>
+      </div>
+      <div class="enc-section"><h3>🔍 O que é?</h3><p>${art.intro}</p></div>
+      <div class="enc-section"><h3>❓ Por que fazer?</h3><p>${art.why}</p></div>
+      <div class="enc-section"><h3>🧬 Base Científica</h3><p>${art.science}</p></div>
+      <div class="enc-section"><h3>✅ Benefícios</h3><ul>${art.benefits.map(b => `<li>${b}</li>`).join('')}</ul></div>
+      <div class="enc-section"><h3>💡 Como Praticar</h3><ul>${art.practice.map(p => `<li>${p}</li>`).join('')}</ul></div>
+      <div class="enc-section"><h3>⚠️ Erros Comuns</h3><ul>${art.mistakes.map(m => `<li>${m}</li>`).join('')}</ul></div>
+      <div class="enc-section"><h3>📚 Leituras Recomendadas</h3><ul>${art.further.map(f => `<li>${f}</li>`).join('')}</ul></div>
+    </div>`;
+    document.getElementById('enc-article-wrap').scrollIntoView({ behavior: 'smooth' });
+  };
+
+  /* ===================================================
+     SETTINGS PAGE
+     =================================================== */
+  function renderSettingsPage() {
+    document.getElementById('settings-name').value = STATE.player.name;
+    const sel = document.getElementById('settings-title');
+    sel.innerHTML = STATE.player.unlockedTitles.map(tid => {
+      const t = PA.TITLES.find(t => t.id === tid);
+      return `<option value="${tid}" ${STATE.player.currentTitle === tid ? 'selected' : ''}>${t ? t.name : tid}</option>`;
+    }).join('');
+    document.getElementById('toggle-sound').checked = STATE.settings?.soundEnabled !== false;
+    document.getElementById('toggle-motion').checked = STATE.settings?.reducedMotion === true;
+  }
+
+  window.saveName = function () {
+    const name = document.getElementById('settings-name').value.trim();
+    if (!name) return;
+    STATE.player.name = name;
+    PA.Storage.save(STATE);
+    renderAll();
+    showToast('👤', `Nome alterado para "${name}"!`, '');
+  };
+
+  window.changeTitle = function (titleId) {
+    PA.AchievementEngine.setTitle(STATE, titleId);
+    PA.Storage.save(STATE);
+    renderAll();
+  };
+
+  window.saveSettings = function () {
+    STATE.settings.soundEnabled = document.getElementById('toggle-sound').checked;
+    STATE.settings.reducedMotion = document.getElementById('toggle-motion').checked;
+    PA.Storage.save(STATE);
+    applySettings();
+  };
+
+  function applySettings() {
+    if (STATE.settings?.reducedMotion) document.body.style.setProperty('--transition', '0s');
+    else document.body.style.removeProperty('--transition');
+  }
+
+  window.selectTitle = function (titleId) {
+    PA.AchievementEngine.setTitle(STATE, titleId);
+    PA.Storage.save(STATE);
+    renderAll();
+  };
+
+  window.confirmReset = function () {
+    if (confirm('⚠️ ATENÇÃO: Isso apagará TODOS os seus dados permanentemente. Esta ação não pode ser desfeita.\n\nTem certeza?')) {
+      if (confirm('Última confirmação: resetar tudo?')) {
+        PA.Storage.reset();
+        location.reload();
+      }
+    }
+  };
+
+  /* ===================================================
+     BACKUP
+     =================================================== */
+  function renderBackupInfo() {
+    const el = document.getElementById('backup-info');
+    const meta = STATE.meta;
+    el.innerHTML = [
+      ['📅', 'Criado em', PA.date.formatBR(meta.createdAt)],
+      ['💾', 'Último salvo', PA.date.formatBR(meta.lastSaveAt)],
+      ['📦', 'Versão', meta.version],
+      ['🔵', 'Hábitos salvos', STATE.habits.length],
+      ['📚', 'Livros salvos', STATE.books.length],
+      ['🎯', 'Metas salvas', STATE.goals.length],
+      ['👹', 'Chefes salvos', STATE.bosses.length],
+    ].map(([i, l, v]) =>
+      `<div class="flex justify-between items-center" style="padding:4px 0;border-bottom:1px solid var(--border)">
+        <span>${i} ${l}</span><span class="text-neon">${v}</span>
+      </div>`
+    ).join('');
+  }
+
+  window.exportData = function () {
+    const json = PA.Storage.exportJSON(STATE);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const today = PA.date.todayStr();
+    a.href = url; a.download = `personal-ascension-backup-${today}.json`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    showToast('💾', 'Backup exportado com sucesso!', '');
+  };
+
+  window.importData = function () {
+    const file = document.getElementById('import-file').files[0];
+    if (!file) { showToast('⚠️', 'Selecione um arquivo JSON.', ''); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        STATE = PA.Storage.importJSON(e.target.result);
+        PA.Storage.save(STATE);
+        renderAll();
+        showToast('✅', 'Dados importados com sucesso!', '');
+      } catch (err) {
+        showToast('❌', 'Arquivo inválido: ' + err.message, '');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  /* ===================================================
+     PRESTIGE
+     =================================================== */
+  window.doPrestige = function () {
+    if (!PA.PrestigeEngine.canPrestige(STATE)) { showToast('⚠️', 'Alcance o nível 30 para ascender.', ''); return; }
+    if (!confirm(`Ascender ao Prestígio ${STATE.player.prestige + 1}?\n\nVocê manterá conquistas, títulos e conhecimento.\nSeu nível voltará a 1, mas ganhará +5% de XP permanente.`)) return;
+    const events = [];
+    PA.PrestigeEngine.prestige(STATE, events);
+    PA.Storage.save(STATE);
+    processEvents(events);
+    renderAll();
+    showToast('✨', `Prestígio ${STATE.player.prestige} alcançado! Você ascendeu!`, 'levelup');
+  };
+
+  /* ===================================================
+     EVENT PROCESSOR (XP gains, level-ups, achievements)
+     =================================================== */
+  function processEvents(events) {
+    events.forEach(ev => {
+      if (ev.type === 'levelup') {
+        showLevelUp(ev.level, ev.coinsBonus);
+        playSound('levelup');
+      } else if (ev.type === 'achievement') {
+        showToast(ev.icon, `Conquista: ${ev.name}!`, 'achievement');
+        playSound('achievement');
+      } else if (ev.type === 'bossDefeated') {
+        showToast('⚔️', `CHEFE DERROTADO: ${ev.bossName}!`, 'boss');
+        playSound('boss');
+      } else if (ev.type === 'bookCompleted') {
+        showToast('📚', `Livro concluído: "${ev.title}"! Excelente!`, 'achievement');
+      }
+    });
+  }
+
+  function showLevelUp(level, coins) {
+    document.getElementById('lu-level').textContent = level;
+    document.getElementById('lu-rank').textContent = PA.rankForLevel(level);
+    document.getElementById('lu-coins').textContent = `+${coins} moedas de bônus!`;
+    const titleFromAch = PA.ACHIEVEMENTS.find(a => a.metric === 'level' && a.threshold === level)?.title;
+    const titleObj = titleFromAch ? PA.TITLES.find(t => t.id === titleFromAch) : null;
+    document.getElementById('lu-title').textContent = titleObj ? `Novo título: ${titleObj.name}` : '';
+    document.getElementById('levelup-overlay').classList.add('show');
+  }
+
+  /* ===================================================
+     TOASTS
+     =================================================== */
+  function showToast(icon, text, type) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-text">${text}</span><button class="toast-dismiss" onclick="this.parentElement.remove()">✕</button>`;
+    container.appendChild(toast);
+    setTimeout(() => { if (toast.parentElement) toast.remove(); }, 4500);
+  }
+
+  /* ===================================================
+     SOUND (optional, minimal Web Audio)
+     =================================================== */
+  function playSound(type) {
+    if (!STATE.settings?.soundEnabled) return;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      const configs = {
+        levelup:     [{ f: 523, t: 0 }, { f: 659, t: .1 }, { f: 784, t: .2 }],
+        achievement: [{ f: 880, t: 0 }, { f: 1046, t: .12 }],
+        boss:        [{ f: 220, t: 0 }, { f: 196, t: .15 }, { f: 165, t: .3 }],
+        complete:    [{ f: 440, t: 0 }, { f: 554, t: .1 }],
+      };
+      const notes = configs[type] || configs.complete;
+      const start = ctx.currentTime;
+      gain.gain.setValueAtTime(0.15, start);
+      notes.forEach(n => { osc.frequency.setValueAtTime(n.f, start + n.t); });
+      osc.type = 'sine';
+      osc.start(start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.7);
+      osc.stop(start + 0.8);
+    } catch (e) { /* silent fail */ }
+  }
+
+  /* ===================================================
+     MODAL HELPERS
+     =================================================== */
+  window.openModal = function (id) { document.getElementById(id).classList.remove('hidden'); };
+  window.closeModal = function (id) { document.getElementById(id).classList.add('hidden'); };
+  // Close modal on overlay click
+  document.addEventListener('click', e => {
+    if (e.target.classList.contains('modal-overlay')) {
+      e.target.classList.add('hidden');
+    }
+  });
+
+  /* ===================================================
+     NAVIGATION
+     =================================================== */
+  function initNavigation() {
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        navigate(item.dataset.page);
+        if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
+      });
+    });
+  }
+
+  window.navigate = function (page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const pageEl = document.getElementById('page-' + page);
+    if (pageEl) pageEl.classList.add('active');
+    const navItem = document.querySelector(`[data-page="${page}"]`);
+    if (navItem) navItem.classList.add('active');
+    const titleMap = {
+      dashboard:'Dashboard', character:'Personagem', habits:'Hábitos Diários',
+      reading:'Leitura', quests:'Missões Semanais', bosses:'Chefes',
+      goals:'Metas', statistics:'Estatísticas', achievements:'Conquistas',
+      shop:'Loja', schedule:'Agenda', semester:'Semestre',
+      encyclopedia:'Enciclopédia', settings:'Configurações', backup:'Backup',
+    };
+    document.getElementById('topbar-title').textContent = titleMap[page] || page;
+    window.scrollTo(0, 0);
+  };
+
+  window.toggleSidebar = function () {
+    document.getElementById('sidebar').classList.toggle('open');
+  };
+
+  /* ===================================================
+     FILTERS
+     =================================================== */
+  function initFilters() {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderHabits(btn.dataset.cat);
+      });
+    });
+  }
+
+  /* ===================================================
+     PARTICLES
+     =================================================== */
+  function initParticles() {
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 18; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 3 + 1;
+      p.style.cssText = `
+        width:${size}px; height:${size}px;
+        left:${Math.random() * 100}%;
+        background:${Math.random() > 0.5 ? 'var(--neon)' : 'var(--neon2)'};
+        animation-duration:${Math.random() * 20 + 15}s;
+        animation-delay:${Math.random() * 20}s;
+      `;
+      container.appendChild(p);
+    }
+  }
+})();
+</script>
+</html>
