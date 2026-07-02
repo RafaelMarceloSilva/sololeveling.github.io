@@ -350,6 +350,14 @@ img{max-width:100%}
 
 /* Schedule */
 #schedule-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.week-table{width:100%;border-collapse:collapse;min-width:560px;font-size:.7rem}
+.week-table th{padding:6px 4px;color:var(--text3);font-weight:700;text-align:center;border-bottom:1px solid var(--border)}
+.week-table th.wt-hour-col{width:44px}
+.week-table td{border:1px solid var(--border);height:20px;padding:0;position:relative}
+.week-table td.wt-hour{color:var(--text3);text-align:right;padding-right:6px;border:none;font-size:.68rem;white-space:nowrap}
+.wt-block{position:absolute;inset:1px;border-radius:2px;opacity:.85}
+.ev-day-chip{padding:3px 9px;border-radius:100px;font-size:.72rem;background:var(--card2);border:1px solid var(--border);color:var(--text2);cursor:pointer;user-select:none}
+.ev-day-chip.active{background:rgba(76,201,240,.15);color:var(--neon);border-color:rgba(76,201,240,.4)}
 #fixed-events-list{display:flex;flex-direction:column;gap:8px}
 .event-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius2)}
 .event-time{font-size:.78rem;color:var(--neon);font-weight:700;width:80px;flex-shrink:0}
@@ -442,22 +450,64 @@ img{max-width:100%}
 /* ======================================================
    RESPONSIVE
    ====================================================== */
+/* ---------- Tablet (≤900px) ---------- */
 @media(max-width:900px){
-  #sidebar{transform:translateX(-100%)}
+  #sidebar{transform:translateX(-100%);box-shadow:0 0 40px rgba(0,0,0,.5)}
   #sidebar.open{transform:translateX(0)}
   #main{margin-left:0}
   #menu-toggle{display:flex}
   .grid-3,.grid-4{grid-template-columns:repeat(2,1fr)}
   #dash-progress-grid{grid-template-columns:1fr}
   #schedule-grid{grid-template-columns:1fr}
+  #dash-overview{grid-template-columns:repeat(3,1fr)}
+  #enc-grid,#books-grid,#library-grid,#rewards-grid,#bosses-grid{grid-template-columns:repeat(2,1fr)}
+  #achievements-grid{grid-template-columns:repeat(3,1fr)}
+  .modal{max-width:92vw}
 }
+
+/* ---------- Mobile large (≤600px) ---------- */
 @media(max-width:600px){
-  .page{padding:16px}
+  .page{padding:14px}
   .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
   #char-header{flex-direction:column;text-align:center}
   #char-level-big{font-size:2.2rem}
-  #topbar{padding:8px 14px}
+  #topbar{padding:8px 12px}
+  #topbar-title{font-size:.88rem}
+  .topbar-stat{font-size:.75rem;gap:4px}
+  #dash-overview{grid-template-columns:repeat(2,1fr)}
+  #enc-grid,#books-grid,#library-grid,#rewards-grid,#bosses-grid{grid-template-columns:1fr}
+  #achievements-grid{grid-template-columns:repeat(2,1fr)}
+  .form-row{grid-template-columns:1fr}
+  .modal{padding:16px;max-width:94vw}
+  .modal-title{font-size:.95rem}
+  .card{padding:14px}
+  .section-title{font-size:1.05rem}
+  #library-toolbar{flex-direction:column}
+  #library-toolbar input,#library-toolbar select{max-width:100%}
+  .habit-item{flex-wrap:wrap}
+  .hi-name{white-space:normal}
+  .btn{padding:7px 12px;font-size:.8rem}
+  #shop-balance{flex-direction:column;align-items:flex-start;gap:8px}
+  #shop-balance .bal-label{text-align:left}
+  .week-table{font-size:.62rem;min-width:520px}
+  .week-table td{height:16px}
+  .exam-item,.event-item{flex-wrap:wrap}
+  .goal-progress-row{flex-wrap:wrap}
+  #char-titles-grid{grid-template-columns:1fr}
 }
+
+/* ---------- Mobile small (≤400px) ---------- */
+@media(max-width:400px){
+  #dash-overview{grid-template-columns:repeat(2,1fr)}
+  .dsc-val{font-size:1.05rem}
+  #char-level-big{font-size:1.8rem}
+  .sb-val{font-size:1.15rem}
+  .nav-item{padding:8px 14px;font-size:.8rem}
+  #sidebar{width:80vw}
+}
+
+/* Tables & wide content always scroll horizontally instead of overflowing the page */
+#week-table-wrap{overflow-x:auto}
 
 /* ======================================================
    ENERGY BAR COLORS
@@ -473,7 +523,7 @@ img{max-width:100%}
 .text-green{color:var(--green)}
 .text-muted{color:var(--text3)}
 .mt4{margin-top:4px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}.mt24{margin-top:24px}
-.mb4{margin-bottom:4px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}
+.mb4{margin-bottom:4px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}
 .flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap8{gap:8px}.gap12{gap:12px}.gap16{gap:16px}
 .fw700{font-weight:700}.fs-sm{font-size:.8rem}.fs-xs{font-size:.72rem}
 .hidden{display:none!important}
@@ -759,16 +809,29 @@ img{max-width:100%}
   ];
 
   /* ---------------- Default shop rewards ---------------- */
+  // Preços recalibrados para uma economia de moedas mais longa: recompensas
+  // pequenas continuam acessíveis no curto prazo, mas as grandes exigem semanas
+  // de consistência, incentivando o hábito de poupar moedas.
+  PA.REWARD_TIERS = {
+    pequena: { label: 'Pequena', color: '#4cc9f0' },
+    media:   { label: 'Média',   color: '#8b5cf6' },
+    grande:  { label: 'Grande',  color: '#f5b942' },
+    luxo:    { label: 'Luxo',    color: '#ff4d6d' },
+  };
   PA.defaultRewards = function () {
     return [
-      { id: 'rw1', name: 'Um quadrado de chocolate', description: 'Uma recompensa doce e simples.', price: 150 },
-      { id: 'rw2', name: 'Açaí ou sobremesa favorita', description: 'Aproveite sem culpa — você ganhou.', price: 250 },
-      { id: 'rw3', name: 'Sessão de filme ou série', description: 'Uma pausa de entretenimento merecida.', price: 300 },
-      { id: 'rw4', name: 'Uma hora de videogame', description: 'Tempo de lazer livre de culpa.', price: 350 },
-      { id: 'rw5', name: 'Pedir aquela comida favorita', description: 'Delivery do que você está com vontade.', price: 700 },
-      { id: 'rw6', name: 'Comprar um livro novo', description: 'Investimento que também é recompensa.', price: 800 },
-      { id: 'rw7', name: 'Uma tarde totalmente livre', description: 'Sem cobranças, sem culpa.', price: 1000 },
-      { id: 'rw8', name: 'Aquele item que você está de olho', description: 'A grande recompensa — guarde moedas para ela.', price: 2500 },
+      { id: 'rw1', name: 'Um quadrado de chocolate', description: 'Uma recompensa doce e simples.', price: 200, tier: 'pequena' },
+      { id: 'rw2', name: 'Açaí ou sobremesa favorita', description: 'Aproveite sem culpa — você ganhou.', price: 350, tier: 'pequena' },
+      { id: 'rw3', name: 'Sessão de filme ou série', description: 'Uma pausa de entretenimento merecida.', price: 450, tier: 'pequena' },
+      { id: 'rw4', name: 'Uma hora de videogame', description: 'Tempo de lazer livre de culpa.', price: 550, tier: 'media' },
+      { id: 'rw5', name: 'Pedir aquela comida favorita', description: 'Delivery do que você está com vontade.', price: 1200, tier: 'media' },
+      { id: 'rw6', name: 'Comprar um livro novo', description: 'Investimento que também é recompensa.', price: 1500, tier: 'media' },
+      { id: 'rw7', name: 'Uma tarde totalmente livre', description: 'Sem cobranças, sem culpa.', price: 2000, tier: 'grande' },
+      { id: 'rw8', name: 'Passeio ou saída especial', description: 'Um programa fora da rotina, só seu.', price: 3200, tier: 'grande' },
+      { id: 'rw9', name: 'Roupa ou acessório novo', description: 'Algo que você vinha adiando comprar.', price: 5000, tier: 'grande' },
+      { id: 'rw10', name: 'Fim de semana livre de culpa', description: 'Dois dias inteiros só para o que quiser.', price: 7500, tier: 'luxo' },
+      { id: 'rw11', name: 'Aquele item que você está de olho', description: 'A grande recompensa — guarde moedas para ela.', price: 12000, tier: 'luxo' },
+      { id: 'rw12', name: 'Uma viagem ou experiência dos sonhos', description: 'O prêmio máximo de meses de disciplina.', price: 25000, tier: 'luxo' },
     ];
   };
 
@@ -1285,6 +1348,8 @@ img{max-width:100%}
         genre: fields.genre || '',
         completedAt: null,
         addedAt: PA.date.todayStr(),
+        rating: 0,
+        notes: '',
       };
       state.books.push(book);
       return book;
@@ -1580,7 +1645,7 @@ img{max-width:100%}
     },
     addReward(state, fields) {
       const id = 'rw_' + Date.now();
-      state.rewards.push({ id, name: fields.name, description: fields.description || '', price: Number(fields.price) || 100 });
+      state.rewards.push({ id, name: fields.name, description: fields.description || '', price: Number(fields.price) || 100, tier: fields.tier || 'media' });
     },
     removeReward(state, id) {
       const idx = state.rewards.findIndex(r => r.id === id);
@@ -1938,8 +2003,23 @@ img{max-width:100%}
           <button class="btn btn-primary" onclick="addBook()">Adicionar Livro 📚</button>
         </div>
 
-        <div class="section-title">Minha Estante</div>
+        <div class="section-title">📖 Lendo Agora</div>
         <div id="books-grid"></div>
+
+        <div class="section-title mt24">📚 Biblioteca Pessoal</div>
+        <div style="font-size:.82rem;color:var(--text3);margin-bottom:14px">Todos os livros que você já concluiu, com data de término e sua avaliação.</div>
+        <div id="library-toolbar" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+          <input id="library-search" placeholder="🔎 Buscar por título ou autor..." style="max-width:280px" oninput="renderLibrary()"/>
+          <select id="library-sort" style="max-width:200px" onchange="renderLibrary()">
+            <option value="recent">Mais recentes</option>
+            <option value="oldest">Mais antigos</option>
+            <option value="title">Título (A-Z)</option>
+            <option value="rating">Melhor avaliados</option>
+            <option value="pages">Mais páginas</option>
+          </select>
+        </div>
+        <div id="library-stats" class="grid-3 mb16"></div>
+        <div id="library-grid"></div>
       </div>
 
       <!-- ==================== QUESTS ==================== -->
@@ -2047,6 +2127,22 @@ img{max-width:100%}
       <!-- ==================== SCHEDULE ==================== -->
       <div class="page" id="page-schedule">
         <div class="section-title">📅 Agenda Inteligente</div>
+
+        <div class="card mb20">
+          <div class="card-title mb12"><span class="ct-icon">🗓️</span> Visão Semanal</div>
+          <div style="overflow-x:auto">
+            <div id="week-table-wrap"></div>
+          </div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:.72rem;color:var(--text3)">
+            <span><span style="display:inline-block;width:10px;height:10px;background:var(--neon);border-radius:2px;margin-right:4px"></span>Estudo</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:var(--gold);border-radius:2px;margin-right:4px"></span>Trabalho</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:var(--red);border-radius:2px;margin-right:4px"></span>Urgente</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:var(--green);border-radius:2px;margin-right:4px"></span>Saúde</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:var(--neon2);border-radius:2px;margin-right:4px"></span>Pessoal</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:var(--border2);border-radius:2px;margin-right:4px"></span>Sono</span>
+          </div>
+        </div>
+
         <div id="schedule-grid">
           <div>
             <div class="card mb16">
@@ -2066,6 +2162,10 @@ img{max-width:100%}
                     <option value="purple">Roxo (pessoal)</option>
                   </select>
                 </div>
+              </div>
+              <div class="form-group mb12">
+                <label class="form-label">Dias da semana</label>
+                <div id="ev-days-checks" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
               </div>
               <button class="btn btn-primary btn-sm" onclick="addScheduleEvent()">Adicionar</button>
               <div class="mt12" id="fixed-events-list"></div>
@@ -2349,7 +2449,17 @@ img{max-width:100%}
     <div class="modal-body">
       <div class="form-group"><label class="form-label">Nome</label><input id="rw-name" placeholder="Ex: Açaí do final de semana"/></div>
       <div class="form-group"><label class="form-label">Descrição</label><textarea id="rw-desc" placeholder="Descreva sua recompensa..."></textarea></div>
-      <div class="form-group"><label class="form-label">Preço em Moedas 🪙</label><input id="rw-price" type="number" min="1" value="300"/></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Preço em Moedas 🪙</label><input id="rw-price" type="number" min="1" value="300"/></div>
+        <div class="form-group"><label class="form-label">Porte</label>
+          <select id="rw-tier">
+            <option value="pequena">Pequena</option>
+            <option value="media" selected>Média</option>
+            <option value="grande">Grande</option>
+            <option value="luxo">Luxo</option>
+          </select>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-add-reward')">Cancelar</button>
@@ -2712,11 +2822,13 @@ img{max-width:100%}
     document.getElementById('rs-hours').textContent = PA.StatEngine.totalReadingHours(STATE).toFixed(1) + 'h';
 
     const grid = document.getElementById('books-grid');
-    if (STATE.books.length === 0) {
-      grid.innerHTML = '<div style="color:var(--text3);font-size:.85rem">Nenhum livro adicionado ainda. Adicione seu primeiro livro!</div>';
-      return;
+    const inProgress = STATE.books.filter(b => !b.completedAt);
+    if (inProgress.length === 0) {
+      grid.innerHTML = '<div style="color:var(--text3);font-size:.85rem">Nenhum livro em andamento. Adicione um livro para começar!</div>';
+    } else {
+      grid.innerHTML = inProgress.map(b => bookCardHTML(b)).join('');
     }
-    grid.innerHTML = STATE.books.map(b => bookCardHTML(b)).join('');
+    renderLibrary();
   }
 
   function bookCardHTML(b) {
@@ -2725,23 +2837,101 @@ img{max-width:100%}
     const eta = PA.ReadingEngine.completionDate(b);
     const remaining = b.totalPages - b.pagesRead;
     const estMins = b.readingSpeedPpm > 0 ? Math.round(remaining / b.readingSpeedPpm) : null;
-    return `<div class="book-card ${b.completedAt ? 'book-completed' : ''}">
+    return `<div class="book-card">
       <div class="book-title">${b.title}</div>
       <div class="book-author">por ${b.author || '—'}</div>
       <div class="book-progress-label"><span>${b.pagesRead} / ${b.totalPages} páginas</span><span>${pct}%</span></div>
       <div class="prog-wrap" style="height:8px"><div class="prog-fill prog-xp" style="width:${pct}%"></div></div>
       <div class="book-meta">
         ${daily ? `<span class="badge badge-blue">Meta: ${daily} pág/dia</span>` : ''}
-        ${eta && !b.completedAt ? `<span class="badge badge-purple">Conclusão: ${PA.date.formatBR(eta)}</span>` : ''}
+        ${eta ? `<span class="badge badge-purple">Conclusão: ${PA.date.formatBR(eta)}</span>` : ''}
         ${estMins ? `<span class="badge badge-gray">~${Math.round(estMins/60*10)/10}h restantes</span>` : ''}
-        ${b.completedAt ? `<span class="badge badge-green">✓ Concluído ${PA.date.formatBR(b.completedAt)}</span>` : ''}
       </div>
-      ${!b.completedAt ? `<div class="book-actions">
+      <div class="book-actions">
         <button class="btn btn-primary btn-sm" onclick="openLogPages('${b.id}')">📖 Registrar Leitura</button>
         <button class="btn btn-danger btn-sm" onclick="removeBook('${b.id}')">🗑</button>
-      </div>` : ''}
+      </div>
     </div>`;
   }
+
+  /* ---------------- Biblioteca pessoal (livros concluídos) ---------------- */
+  window.renderLibrary = function () {
+    const statsEl = document.getElementById('library-stats');
+    const gridEl = document.getElementById('library-grid');
+    if (!statsEl || !gridEl) return;
+
+    let completed = STATE.books.filter(b => b.completedAt);
+
+    const totalPages = completed.reduce((acc, b) => acc + b.totalPages, 0);
+    const avgRating = completed.length ? (completed.reduce((acc, b) => acc + (b.rating || 0), 0) / completed.length) : 0;
+    statsEl.innerHTML = `
+      <div class="stat-block"><div class="sb-val">${completed.length}</div><div class="sb-label">Livros na Biblioteca</div></div>
+      <div class="stat-block"><div class="sb-val">${totalPages}</div><div class="sb-label">Páginas Acumuladas</div></div>
+      <div class="stat-block"><div class="sb-val">${avgRating ? avgRating.toFixed(1) + ' ★' : '—'}</div><div class="sb-label">Avaliação Média</div></div>
+    `;
+
+    // Search filter
+    const q = (document.getElementById('library-search')?.value || '').toLowerCase().trim();
+    if (q) {
+      completed = completed.filter(b => b.title.toLowerCase().includes(q) || (b.author || '').toLowerCase().includes(q));
+    }
+
+    // Sort
+    const sortMode = document.getElementById('library-sort')?.value || 'recent';
+    completed = [...completed].sort((a, b) => {
+      if (sortMode === 'recent') return b.completedAt.localeCompare(a.completedAt);
+      if (sortMode === 'oldest') return a.completedAt.localeCompare(b.completedAt);
+      if (sortMode === 'title') return a.title.localeCompare(b.title);
+      if (sortMode === 'rating') return (b.rating || 0) - (a.rating || 0);
+      if (sortMode === 'pages') return b.totalPages - a.totalPages;
+      return 0;
+    });
+
+    if (completed.length === 0) {
+      gridEl.innerHTML = '<div style="color:var(--text3);font-size:.85rem">Nenhum livro concluído ainda. Quando você terminar um livro, ele aparece aqui automaticamente.</div>';
+      return;
+    }
+    gridEl.innerHTML = completed.map(b => libraryCardHTML(b)).join('');
+  };
+
+  function libraryCardHTML(b) {
+    const rating = b.rating || 0;
+    const stars = [1,2,3,4,5].map(i =>
+      `<span class="lib-star" style="cursor:pointer;font-size:1rem;color:${i <= rating ? 'var(--gold)' : 'var(--border2)'}" onclick="rateBook('${b.id}',${i})">★</span>`
+    ).join('');
+    return `<div class="book-card book-completed">
+      <div class="book-title">${b.title}</div>
+      <div class="book-author">por ${b.author || '—'}</div>
+      <div style="margin:6px 0">${stars}</div>
+      ${b.notes ? `<div style="font-size:.78rem;color:var(--text2);font-style:italic;margin-bottom:8px">"${b.notes}"</div>` : ''}
+      <div class="book-meta">
+        <span class="badge badge-green">✓ Concluído ${PA.date.formatBR(b.completedAt)}</span>
+        <span class="badge badge-gray">${b.totalPages} páginas</span>
+      </div>
+      <div class="book-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openBookNote('${b.id}')">📝 Nota</button>
+        <button class="btn btn-danger btn-sm" onclick="removeBook('${b.id}')">🗑</button>
+      </div>
+    </div>`;
+  }
+
+  window.rateBook = function (bookId, stars) {
+    const book = STATE.books.find(b => b.id === bookId);
+    if (!book) return;
+    book.rating = book.rating === stars ? 0 : stars; // click same star again to clear
+    PA.Storage.save(STATE);
+    renderLibrary();
+  };
+
+  window.openBookNote = function (bookId) {
+    const book = STATE.books.find(b => b.id === bookId);
+    if (!book) return;
+    const note = prompt('Sua nota/resenha sobre este livro:', book.notes || '');
+    if (note === null) return;
+    book.notes = note.trim();
+    PA.Storage.save(STATE);
+    renderLibrary();
+  };
 
   window.addBook = function () {
     const speedPages = Number(document.getElementById('book-speed').value);
@@ -3133,11 +3323,17 @@ img{max-width:100%}
   function renderShop() {
     document.getElementById('shop-coins').textContent = STATE.player.coins;
     const grid = document.getElementById('rewards-grid');
-    grid.innerHTML = STATE.rewards.map(r => {
+    const sorted = [...STATE.rewards].sort((a, b) => a.price - b.price);
+    grid.innerHTML = sorted.map(r => {
       const canAfford = STATE.player.coins >= r.price;
+      const tier = PA.REWARD_TIERS[r.tier] || null;
+      const pct = Math.min(100, Math.round((STATE.player.coins / r.price) * 100));
       return `<div class="reward-card">
+        ${tier ? `<span class="badge" style="align-self:flex-start;background:${tier.color}22;color:${tier.color};border:1px solid ${tier.color}44">${tier.label}</span>` : ''}
         <div class="rc-name">🎁 ${r.name}</div>
         <div class="rc-desc">${r.description}</div>
+        ${!canAfford ? `<div class="prog-wrap" style="height:6px"><div class="prog-fill prog-coin" style="width:${pct}%"></div></div>
+        <div style="font-size:.7rem;color:var(--text3)">${pct}% guardado · faltam ${r.price - STATE.player.coins} 🪙</div>` : ''}
         <div class="rc-footer">
           <div class="rc-price">🪙 ${r.price}</div>
           <div style="display:flex;gap:6px">
@@ -3183,6 +3379,7 @@ img{max-width:100%}
       name: document.getElementById('rw-name').value.trim() || 'Recompensa',
       description: document.getElementById('rw-desc').value.trim(),
       price: document.getElementById('rw-price').value,
+      tier: document.getElementById('rw-tier').value,
     };
     PA.ShopEngine.addReward(STATE, fields);
     PA.Storage.save(STATE);
@@ -3201,23 +3398,47 @@ img{max-width:100%}
   /* ===================================================
      SCHEDULE
      =================================================== */
+  const WEEKDAY_CHIPS = [
+    { num: 1, label: 'Seg' }, { num: 2, label: 'Ter' }, { num: 3, label: 'Qua' },
+    { num: 4, label: 'Qui' }, { num: 5, label: 'Sex' }, { num: 6, label: 'Sáb' }, { num: 0, label: 'Dom' },
+  ];
+  let _selectedEvDays = [1, 2, 3, 4, 5]; // default: dias úteis
+
+  function populateEvDaysChecks() {
+    const el = document.getElementById('ev-days-checks');
+    if (!el) return;
+    el.innerHTML = WEEKDAY_CHIPS.map(d =>
+      `<span class="ev-day-chip ${_selectedEvDays.includes(d.num) ? 'active' : ''}" data-day="${d.num}" onclick="toggleEvDay(${d.num})">${d.label}</span>`
+    ).join('');
+  }
+
+  window.toggleEvDay = function (num) {
+    const idx = _selectedEvDays.indexOf(num);
+    if (idx === -1) _selectedEvDays.push(num); else _selectedEvDays.splice(idx, 1);
+    populateEvDaysChecks();
+  };
+
   function renderSchedule() {
+    populateEvDaysChecks();
     const evList = document.getElementById('fixed-events-list');
     const events = STATE.schedule.fixedEvents || [];
     const colorMap = { neon:'var(--neon)', gold:'var(--gold)', red:'var(--red)', green:'var(--green)', purple:'var(--neon2)' };
     if (events.length === 0) {
       evList.innerHTML = '<div style="color:var(--text3);font-size:.82rem">Nenhum horário fixo adicionado.</div>';
     } else {
-      evList.innerHTML = events.map((e, i) =>
-        `<div class="event-item">
+      evList.innerHTML = events.map((e, i) => {
+        const days = e.days && e.days.length ? e.days : [0,1,2,3,4,5,6];
+        const dayLabels = WEEKDAY_CHIPS.filter(d => days.includes(d.num)).map(d => d.label).join(' ');
+        return `<div class="event-item">
           <div class="event-time" style="color:${colorMap[e.color] || 'var(--neon)'}">${e.start} – ${e.end}</div>
-          <div class="event-name">${e.name}</div>
+          <div class="event-name">${e.name}<div style="font-size:.68rem;color:var(--text3);margin-top:2px">${dayLabels}</div></div>
           <button class="btn btn-danger btn-icon btn-sm" onclick="removeEvent(${i})">✕</button>
-        </div>`
-      ).join('');
+        </div>`;
+      }).join('');
     }
     document.getElementById('sleep-start').value = STATE.schedule.sleepStart || '23:00';
     document.getElementById('sleep-end').value = STATE.schedule.sleepEnd || '07:00';
+    renderWeekTable();
   }
 
   window.addScheduleEvent = function () {
@@ -3226,7 +3447,9 @@ img{max-width:100%}
       start: document.getElementById('ev-start').value,
       end: document.getElementById('ev-end').value,
       color: document.getElementById('ev-color').value,
+      days: [..._selectedEvDays].sort(),
     };
+    if (!ev.days.length) { showToast('⚠️', 'Selecione ao menos um dia da semana.', ''); return; }
     if (!STATE.schedule.fixedEvents) STATE.schedule.fixedEvents = [];
     STATE.schedule.fixedEvents.push(ev);
     STATE.schedule.fixedEvents.sort((a, b) => a.start.localeCompare(b.start));
@@ -3239,6 +3462,44 @@ img{max-width:100%}
     PA.Storage.save(STATE);
     renderSchedule();
   };
+
+  /* ---------------- Tabela visual semanal ---------------- */
+  function renderWeekTable() {
+    const wrap = document.getElementById('week-table-wrap');
+    if (!wrap) return;
+    const colorMap = { neon:'var(--neon)', gold:'var(--gold)', red:'var(--red)', green:'var(--green)', purple:'var(--neon2)' };
+    const events = STATE.schedule.fixedEvents || [];
+    const sleepStart = STATE.schedule.sleepStart || '23:00';
+    const sleepEnd = STATE.schedule.sleepEnd || '07:00';
+    const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+    const sMin = toMin(sleepStart), eMin = toMin(sleepEnd);
+
+    const hours = Array.from({ length: 19 }, (_, i) => i + 5); // 05h .. 23h
+    let html = '<table class="week-table"><thead><tr><th class="wt-hour-col"></th>' +
+      WEEKDAY_CHIPS.map(d => `<th>${d.label}</th>`).join('') + '</tr></thead><tbody>';
+
+    hours.forEach(h => {
+      html += `<tr><td class="wt-hour">${String(h).padStart(2,'0')}h</td>`;
+      WEEKDAY_CHIPS.forEach(d => {
+        const hourStartMin = h * 60, hourEndMin = h * 60 + 59;
+        let block = null;
+        events.forEach(e => {
+          const days = e.days && e.days.length ? e.days : [0,1,2,3,4,5,6];
+          if (!days.includes(d.num)) return;
+          const evS = toMin(e.start), evE = toMin(e.end);
+          if (hourStartMin < evE && hourEndMin >= evS) block = colorMap[e.color] || 'var(--neon)';
+        });
+        let isSleep = false;
+        if (sMin > eMin) { isSleep = (hourStartMin >= sMin) || (hourEndMin < eMin); }
+        else { isSleep = hourStartMin < eMin && hourEndMin >= sMin; }
+        const bg = block ? block : (isSleep ? 'var(--border2)' : 'transparent');
+        html += `<td><div class="wt-block" style="background:${bg};opacity:${block ? .85 : (isSleep ? .5 : 0)}"></div></td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
 
   window.saveSleep = function () {
     STATE.schedule.sleepStart = document.getElementById('sleep-start').value;
